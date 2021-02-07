@@ -170,8 +170,8 @@ mvn clean
 
 echo "Build javadocs"
 git checkout "${MVN_VERSION_RELEASE}"
-mvn clean install -DskipTests;
-mvn package -Passembly,!formatting -Djapicmp.skip -DskipTests --batch-mode
+mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dmaven.test.skip=true -Dformatter.skip=true -Dimpsort.skip=true -Dxml-format.skip=true  -Djapicmp.skip -Denforcer.skip=true -Dbuildnumber.plugin.phase=none -Danimal.sniffer.skip=true
+mvn package -Passembly,!formatting -DskipTests -Dmaven.javadoc.skip=true -Dmaven.test.skip=true -Dformatter.skip=true -Dimpsort.skip=true -Dxml-format.skip=true  -Djapicmp.skip -Denforcer.skip=true -Dbuildnumber.plugin.phase=none -Danimal.sniffer.skip=true --batch-mode
 
 git checkout "${ORIGINAL_BRANCH}"
 RELEASE_NOTES_BRANCH="${MVN_VERSION_RELEASE}-release-notes"
