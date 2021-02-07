@@ -170,7 +170,7 @@ mvn clean
 
 echo "Build javadocs"
 git checkout "${MVN_VERSION_RELEASE}"
-mvn clean;
+mvn clean install -DskipTests;
 mvn package -Passembly,!formatting -Djapicmp.skip -DskipTests --batch-mode
 
 git checkout "${ORIGINAL_BRANCH}"
