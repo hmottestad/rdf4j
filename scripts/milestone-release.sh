@@ -102,6 +102,14 @@ if ! git push --dry-run > /dev/null 2>&1; then
     exit 1;
 fi
 
+ORIGINAL_BRANCH=""
+if  git status --porcelain --branch | grep -q "## master...origin/master"; then
+  ORIGINAL_BRANCH="master";
+fi
+if  git status --porcelain --branch | grep -q "## develop...origin/develop"; then
+  ORIGINAL_BRANCH="develop";
+fi
+
 echo "Running mvn clean";
 mvn clean;
 
@@ -159,7 +167,19 @@ read -n 1 -srp "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
 
 mvn clean
 
+
+echo "Build javadocs"
+git checkout "${MVN_VERSION_RELEASE}"
+mvn clean;
+mvn package -Passembly,!formatting -Djapicmp.skip -DskipTests --batch-mode
+
+git checkout "${ORIGINAL_BRANCH}"
+RELEASE_NOTES_BRANCH="${MVN_VERSION_RELEASE}-release-notes"
+git checkout -b "${RELEASE_NOTES_BRANCH}"
+
 cd scripts
+
+
 
 echo "DONE!"
 
@@ -181,4 +201,3 @@ echo " - Go to https://github.com/eclipse/rdf4j/tree/master/site/content/news an
 echo " - Go to https://github.com/eclipse/rdf4j/releases/new and create a release for the ${MVN_VERSION_RELEASE} tag. Add a link to the release notes in the description."
 echo " - Upload the javadocs by adding a compressed tar.gz archive called ${MVN_VERSION_RELEASE}.tgz to site/static/javadoc/"
 echo "     - Aggregated javadoc can be found in target/site/apidocs or in the SDK zip file"
-echo "     - Make sure to also replace the site/static/javadoc/latest file with a copy. Do not use a symlink."
