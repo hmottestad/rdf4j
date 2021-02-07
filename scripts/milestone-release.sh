@@ -169,6 +169,8 @@ mvn clean
 
 
 echo "Build javadocs"
+read -n 1 -srp "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
+
 git checkout "${MVN_VERSION_RELEASE}"
 mvn clean install -DskipTests -Djapicmp.skip
 mvn package -Passembly,!formatting -Djapicmp.skip -DskipTests --batch-mode
@@ -177,6 +179,9 @@ git checkout "${ORIGINAL_BRANCH}"
 RELEASE_NOTES_BRANCH="${MVN_VERSION_RELEASE}-release-notes"
 git checkout -b "${RELEASE_NOTES_BRANCH}"
 
+tar -cvzf "site/static/javadoc/${MVN_VERSION_RELEASE}.tgz" target/site/apidocs
+
+
 cd scripts
 
 
@@ -184,9 +189,9 @@ cd scripts
 echo "DONE!"
 
 # the news file on github should be 302 if the release is 3.0.2, so replace "." twice
-NEWS_FILE_NAME=$MVN_VERSION_RELEASE
-NEWS_FILE_NAME=${NEWS_FILE_NAME/./}
-NEWS_FILE_NAME=${NEWS_FILE_NAME/./}
+NEWS_FILENAME=$MVN_VERSION_RELEASE
+NEWS_FILENAME=${NEWS_FILENAME/./}
+NEWS_FILENAME=${NEWS_FILENAME/./}
 
 echo ""
 echo "You will now want to inform the community about the new release!"
@@ -197,7 +202,7 @@ echo " - Create a new milestone for ${MVN_NEXT_SNAPSHOT_VERSION/-SNAPSHOT/} : ht
 echo "     - Go to the milestone, click the 'closed' tab and copy the link for later"
 echo " - Go to https://github.com/eclipse/rdf4j/tree/master/site/content/release-notes and create ${MVN_VERSION_RELEASE}.md"
 echo " - Edit the following file https://github.com/eclipse/rdf4j/blob/master/site/content/download.md"
-echo " - Go to https://github.com/eclipse/rdf4j/tree/master/site/content/news and create rdf4j-${NEWS_FILE_NAME}.md"
+echo " - Go to https://github.com/eclipse/rdf4j/tree/master/site/content/news and create rdf4j-${NEWS_FILENAME}.md"
 echo " - Go to https://github.com/eclipse/rdf4j/releases/new and create a release for the ${MVN_VERSION_RELEASE} tag. Add a link to the release notes in the description."
 echo " - Upload the javadocs by adding a compressed tar.gz archive called ${MVN_VERSION_RELEASE}.tgz to site/static/javadoc/"
 echo "     - Aggregated javadoc can be found in target/site/apidocs or in the SDK zip file"
