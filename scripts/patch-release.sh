@@ -124,7 +124,7 @@ echo "";
 echo "Your current maven snapshot version is: ${MVN_CURRENT_SNAPSHOT_VERSION}"
 echo "Your maven release version will be: ${MVN_VERSION_RELEASE}"
 echo "Your next maven snapshot version will be: ${MVN_NEXT_SNAPSHOT_VERSION}"
-read -rspn 1 "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
+read -n 1 -srp "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
 
 # set maven version
 mvn versions:set -DnewVersion="${MVN_VERSION_RELEASE}"
@@ -153,7 +153,7 @@ git tag "${MVN_VERSION_RELEASE}"
 
 echo "";
 echo "Pushing release branch to github"
-read -rspn 1 "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
+read -n 1 -srp "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
 
 # push release branch and tag
 git push -u origin "${BRANCH}"
@@ -165,7 +165,7 @@ echo "- SDK deployment: https://ci.eclipse.org/rdf4j/job/rdf4j-deploy-release-sd
 echo "- Maven deployment: https://ci.eclipse.org/rdf4j/job/rdf4j-deploy-release-ossrh/ "
 echo "(if you are on linux or windows, remember to use CTRL+SHIFT+C to copy)."
 echo "Log in, then choose 'Build with Parameters' and type in ${MVN_VERSION_RELEASE}"
-read -rspn 1 "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
+read -n 1 -srp "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
 
 # Cleanup
 mvn clean
@@ -173,7 +173,7 @@ mvn clean
 # Set a new SNAPSHOT version
 echo "";
 echo "Setting the next snapshot version to: ${MVN_NEXT_SNAPSHOT_VERSION}"
-read -rspn 1 "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
+read -n 1 -srp "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
 
 
 # set maven version
@@ -191,7 +191,7 @@ git push
 
 echo "";
 echo "About to create PR"
-read -rspn 1 "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
+read -n 1 -srp "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
 echo "";
 
 echo "Creating pull request to merge release branch back into master"
@@ -199,7 +199,7 @@ gh pr create --title "next development iteration: ${MVN_NEXT_SNAPSHOT_VERSION}" 
 
 echo "";
 echo "Preparing a merge-branch to merge into develop"
-read -rspn 1 "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
+read -n 1 -srp "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
 
 
 git checkout develop
@@ -219,7 +219,7 @@ git push --set-upstream origin "merge_master_into_develop_after_release_${MVN_VE
 echo "Creating pull request to merge the merge-branch into develop"
 gh pr create -B develop --title "sync develop branch after release ${MVN_VERSION_RELEASE}" --body "Merge using merge commit rather than rebase"
 echo "It's ok to merge this PR later, so wait for the Jenkins tests to finish."
-read -rspn 1 "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
+read -n 1 -srp "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
 
 git checkout master
 
