@@ -110,7 +110,7 @@ MVN_CURRENT_SNAPSHOT_VERSION=$(xmllint --xpath "//*[local-name()='project']/*[lo
 echo "";
 echo "Your current maven snapshot version is: '${MVN_CURRENT_SNAPSHOT_VERSION}'"
 echo ""
-read -rp "What is the version you would like to release?\nVersion: " MVN_VERSION_RELEASE
+read -rp "What is the version you would like to release? " MVN_VERSION_RELEASE
 echo ""
 echo "Your maven release version will be: '${MVN_VERSION_RELEASE}'"
 read -n 1 -srp "Press any key to continue (ctrl+c to cancel)"; printf "\n\n";
