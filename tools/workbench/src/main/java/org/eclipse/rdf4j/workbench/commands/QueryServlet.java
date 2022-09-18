@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.workbench.commands;
 
@@ -22,7 +25,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.rdf4j.RDF4JException;
+import org.eclipse.rdf4j.common.exception.RDF4JException;
 import org.eclipse.rdf4j.common.iteration.Iterations;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
@@ -319,9 +322,8 @@ public class QueryServlet extends TransformationServlet {
 	private void service(final WorkbenchRequest req, final HttpServletResponse resp, final OutputStream out,
 			final String xslPath)
 			throws BadRequestException, RDF4JException, UnsupportedQueryResultFormatException, IOException {
-		final RepositoryConnection con = repository.getConnection();
-		con.setParserConfig(NON_VERIFYING_PARSER_CONFIG);
-		try {
+		try (RepositoryConnection con = repository.getConnection()) {
+			con.setParserConfig(NON_VERIFYING_PARSER_CONFIG);
 			final TupleResultBuilder builder = getTupleResultBuilder(req, resp, resp.getOutputStream());
 			for (Namespace ns : Iterations.asList(con.getNamespaces())) {
 				builder.prefix(ns.getPrefix(), ns.getName());
@@ -344,8 +346,6 @@ public class QueryServlet extends TransformationServlet {
 					throw exc;
 				}
 			}
-		} finally {
-			con.close();
 		}
 	}
 

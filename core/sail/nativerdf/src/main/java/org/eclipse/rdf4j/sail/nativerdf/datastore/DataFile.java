@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.nativerdf.datastore;
 
@@ -111,7 +114,7 @@ public class DataFile implements Closeable {
 	/**
 	 * Stores the specified data and returns the byte-offset at which it has been stored.
 	 *
-	 * @param data The data to store, must not be <tt>null</tt>.
+	 * @param data The data to store, must not be <var>null</var>.
 	 * @return The byte-offset in the file at which the data was stored.
 	 */
 	public long storeData(byte[] data) throws IOException {

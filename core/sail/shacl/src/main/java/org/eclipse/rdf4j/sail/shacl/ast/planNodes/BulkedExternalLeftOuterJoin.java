@@ -1,23 +1,30 @@
 /*******************************************************************************
- * .Copyright (c) 2020 Eclipse RDF4J contributors.
+ * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 
 package org.eclipse.rdf4j.sail.shacl.ast.planNodes;
 
 import java.util.ArrayDeque;
+import java.util.Objects;
 import java.util.function.Function;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.rdf4j.common.iteration.CloseableIteration;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.query.BindingSet;
-import org.eclipse.rdf4j.query.parser.ParsedQuery;
+import org.eclipse.rdf4j.query.Dataset;
+import org.eclipse.rdf4j.query.algebra.TupleExpr;
 import org.eclipse.rdf4j.sail.SailConnection;
 import org.eclipse.rdf4j.sail.SailException;
 import org.eclipse.rdf4j.sail.memory.MemoryStoreConnection;
+import org.eclipse.rdf4j.sail.shacl.ast.StatementMatcher;
 
 /**
  * @author Håvard Ottestad
@@ -29,32 +36,32 @@ public class BulkedExternalLeftOuterJoin extends AbstractBulkJoinPlanNode {
 
 	private final SailConnection connection;
 	private final PlanNode leftNode;
-	private ParsedQuery parsedQuery;
-	private final boolean skipBasedOnPreviousConnection;
-	private final SailConnection previousStateConnection;
+	private final Dataset dataset;
+	private final Resource[] dataGraph;
+	private TupleExpr parsedQuery;
 	private final String query;
 	private boolean printed = false;
 
-	public BulkedExternalLeftOuterJoin(PlanNode leftNode, SailConnection connection, String query,
-			boolean skipBasedOnPreviousConnection, SailConnection previousStateConnection,
+	public BulkedExternalLeftOuterJoin(PlanNode leftNode, SailConnection connection, Resource[] dataGraph,
+			String query,
 			Function<BindingSet, ValidationTuple> mapper) {
 		leftNode = PlanNodeHelper.handleSorting(this, leftNode);
 		this.leftNode = leftNode;
-		this.query = query;
+		this.query = StatementMatcher.StableRandomVariableProvider.normalize(query);
 		this.connection = connection;
-		this.skipBasedOnPreviousConnection = skipBasedOnPreviousConnection;
-		this.previousStateConnection = previousStateConnection;
+		assert this.connection != null;
 		this.mapper = mapper;
-
+		this.dataset = PlanNodeHelper.asDefaultGraphDataset(dataGraph);
+		this.dataGraph = dataGraph;
 	}
 
 	@Override
 	public CloseableIteration<? extends ValidationTuple, SailException> iterator() {
 		return new LoggingCloseableIteration(this, validationExecutionLogger) {
 
-			final ArrayDeque<ValidationTuple> left = new ArrayDeque<>();
+			final ArrayDeque<ValidationTuple> left = new ArrayDeque<>(BULK_SIZE);
 
-			final ArrayDeque<ValidationTuple> right = new ArrayDeque<>();
+			final ArrayDeque<ValidationTuple> right = new ArrayDeque<>(BULK_SIZE);
 
 			final CloseableIteration<? extends ValidationTuple, SailException> leftNodeIterator = leftNode.iterator();
 
@@ -64,7 +71,7 @@ public class BulkedExternalLeftOuterJoin extends AbstractBulkJoinPlanNode {
 					return;
 				}
 
-				while (left.size() < 200 && leftNodeIterator.hasNext()) {
+				while (left.size() < BULK_SIZE && leftNodeIterator.hasNext()) {
 					left.addFirst(leftNodeIterator.next());
 				}
 
@@ -76,24 +83,23 @@ public class BulkedExternalLeftOuterJoin extends AbstractBulkJoinPlanNode {
 					parsedQuery = parseQuery(query);
 				}
 
-				runQuery(left, right, connection, parsedQuery, skipBasedOnPreviousConnection, previousStateConnection,
-						mapper);
+				runQuery(left, right, connection, parsedQuery, dataset, dataGraph, false, null);
 
 			}
 
 			@Override
-			public void close() throws SailException {
+			public void localClose() throws SailException {
 				leftNodeIterator.close();
 			}
 
 			@Override
-			boolean localHasNext() throws SailException {
+			protected boolean localHasNext() throws SailException {
 				calculateNext();
 				return !left.isEmpty();
 			}
 
 			@Override
-			ValidationTuple loggingNext() throws SailException {
+			protected ValidationTuple loggingNext() throws SailException {
 				calculateNext();
 
 				if (!left.isEmpty()) {
@@ -134,10 +140,6 @@ public class BulkedExternalLeftOuterJoin extends AbstractBulkJoinPlanNode {
 				return null;
 			}
 
-			@Override
-			public void remove() throws SailException {
-
-			}
 		};
 	}
 
@@ -168,14 +170,6 @@ public class BulkedExternalLeftOuterJoin extends AbstractBulkJoinPlanNode {
 					.append("\n");
 		}
 
-		if (skipBasedOnPreviousConnection) {
-			stringBuilder
-					.append(System.identityHashCode(previousStateConnection) + " -> " + getId()
-							+ " [label=\"skip if not present\"]")
-					.append("\n");
-
-		}
-
 		stringBuilder.append(leftNode.getId() + " -> " + getId() + " [label=\"left\"]").append("\n");
 
 	}
@@ -195,5 +189,28 @@ public class BulkedExternalLeftOuterJoin extends AbstractBulkJoinPlanNode {
 	public void receiveLogger(ValidationExecutionLogger validationExecutionLogger) {
 		this.validationExecutionLogger = validationExecutionLogger;
 		leftNode.receiveLogger(validationExecutionLogger);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		if (!super.equals(o)) {
+			return false;
+		}
+		BulkedExternalLeftOuterJoin that = (BulkedExternalLeftOuterJoin) o;
+		return Objects.equals(connection, that.connection)
+				&& leftNode.equals(that.leftNode)
+				&& Objects.equals(dataset, that.dataset)
+				&& query.equals(that.query);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), connection, dataset, leftNode, query);
 	}
 }

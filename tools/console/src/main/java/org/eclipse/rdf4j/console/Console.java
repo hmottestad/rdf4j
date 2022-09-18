@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.console;
 
@@ -35,7 +38,6 @@ import org.eclipse.rdf4j.console.command.Open;
 import org.eclipse.rdf4j.console.command.PrintHelp;
 import org.eclipse.rdf4j.console.command.PrintInfo;
 import org.eclipse.rdf4j.console.command.QueryEvaluator;
-import org.eclipse.rdf4j.console.command.Serql;
 import org.eclipse.rdf4j.console.command.SetParameters;
 import org.eclipse.rdf4j.console.command.Show;
 import org.eclipse.rdf4j.console.command.Sparql;
@@ -227,7 +229,6 @@ public class Console {
 		TupleAndGraphQueryEvaluator eval = new TupleAndGraphQueryEvaluator(consoleIO, STATE, settingMap);
 		register(new Federate(consoleIO, STATE));
 		register(new Sparql(eval));
-		register(new Serql(eval));
 		// information
 		register(new PrintHelp(consoleIO, commandMap));
 		register(new PrintInfo(consoleIO, STATE));

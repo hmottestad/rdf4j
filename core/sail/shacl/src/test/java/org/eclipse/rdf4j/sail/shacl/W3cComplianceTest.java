@@ -1,3 +1,14 @@
+/*******************************************************************************
+ * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Distribution License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *******************************************************************************/
+
 package org.eclipse.rdf4j.sail.shacl;
 
 import static org.junit.Assert.assertEquals;
@@ -7,7 +18,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
@@ -21,9 +31,11 @@ import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.impl.DynamicModel;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDF4J;
 import org.eclipse.rdf4j.model.vocabulary.SHACL;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
@@ -31,7 +43,7 @@ import org.eclipse.rdf4j.repository.sail.SailRepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
-import org.eclipse.rdf4j.sail.shacl.ast.Shape;
+import org.eclipse.rdf4j.sail.shacl.ast.ContextWithShapes;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,41 +68,47 @@ public class W3cComplianceTest {
 
 	@Ignore
 	@Test
-	public void test() throws IOException {
+	public void test() throws IOException, InterruptedException {
 		runTest(testCasePath);
 	}
 
 	@Test
-	public void parsingTest() throws IOException {
+	public void parsingTest() throws IOException, InterruptedException {
 		runParsingTest(testCasePath);
 	}
 
-	private void runParsingTest(URL resourceName) throws IOException {
-		W3C_shaclTestValidate expected = new W3C_shaclTestValidate(resourceName);
-
+	private void runParsingTest(URL resourceName) throws IOException, InterruptedException {
 		ShaclSail shaclSail = new ShaclSail(new MemoryStore());
 		SailRepository sailRepository = new SailRepository(shaclSail);
 
-		Utils.loadShapeData(sailRepository, resourceName);
+		Utils.loadShapeData(sailRepository, resourceName, RDFFormat.TURTLE, RDF4J.SHACL_SHAPE_GRAPH);
 
 		Model statements = extractShapesModel(shaclSail);
 
-		System.out.println(AbstractShaclTest.modelToString(statements));
+		sailRepository.shutDown();
+
+		statements
+				.filter(null, RDF.REST, null)
+				.subjects()
+				.forEach(s -> {
+					int size = statements.filter(s, RDF.REST, null).objects().size();
+					assertEquals(s + " has more than one rdf:rest", size, 1);
+				});
+
+//		System.out.println(AbstractShaclTest.modelToString(statements));
 
 		assert !statements.isEmpty();
 
 	}
 
-	private Model extractShapesModel(ShaclSail shaclSail) {
-		List<Shape> shapes = shaclSail.getCurrentShapes();
+	private Model extractShapesModel(ShaclSail shaclSail) throws InterruptedException {
+		List<ContextWithShapes> shapes = shaclSail.getCachedShapes().getDataAndRelease();
 
-		return shapes.stream()
-				.map(shape -> shape.toModel(new DynamicModelFactory().createEmptyModel()))
-				.reduce((a, b) -> {
-					a.addAll(b);
-					return a;
-				})
-				.orElse(new LinkedHashModel());
+		DynamicModel model = new DynamicModelFactory().createEmptyModel();
+
+		shapes.forEach(shape -> shape.toModel(model));
+
+		return model;
 	}
 
 	private static Set<URL> getTestFiles() {
@@ -112,8 +130,6 @@ public class W3cComplianceTest {
 
 		}
 
-		System.out.println(Arrays.toString(testFiles.toArray()));
-
 		return testFiles;
 
 	}
@@ -124,9 +140,8 @@ public class W3cComplianceTest {
 
 		public Manifest(URL filename) {
 			SailRepository sailRepository = new SailRepository(new MemoryStore());
-			sailRepository.initialize();
 			try (SailRepositoryConnection connection = sailRepository.getConnection()) {
-				connection.add(filename, filename.toString(), RDFFormat.TURTLE);
+				connection.add(filename, filename.toString(), RDFFormat.TRIG);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -157,23 +172,23 @@ public class W3cComplianceTest {
 
 	}
 
-	private void runTest(URL resourceName) throws IOException {
+	private void runTest(URL resourceName) throws IOException, InterruptedException {
 		W3C_shaclTestValidate expected = new W3C_shaclTestValidate(resourceName);
 
 		ShaclSail shaclSail = new ShaclSail(new MemoryStore());
 		shaclSail.setParallelValidation(false);
 		SailRepository sailRepository = new SailRepository(shaclSail);
 
-		Utils.loadShapeData(sailRepository, resourceName);
+		Utils.loadShapeData(sailRepository, resourceName, RDFFormat.TURTLE, RDF4J.SHACL_SHAPE_GRAPH);
 
 		Model statements = extractShapesModel(shaclSail);
 
-		System.out.println(AbstractShaclTest.modelToString(statements));
+		System.out.println(AbstractShaclTest.modelToString(statements, RDFFormat.TURTLE));
 
 		boolean actualConforms = true;
 		try (SailRepositoryConnection connection = sailRepository.getConnection()) {
 			connection.begin();
-			connection.add(resourceName, "http://example.org/", RDFFormat.TURTLE);
+			connection.add(resourceName, "http://example.org/", RDFFormat.TRIG);
 			connection.commit();
 
 			connection.begin();
@@ -189,12 +204,12 @@ public class W3cComplianceTest {
 						SimpleValueFactory.getInstance().createLiteral(true));
 
 				System.out.println("\n######### Report ######### \n");
-				Rio.write(statements1, System.out, RDFFormat.TURTLE);
+				Rio.write(statements1, System.out, RDFFormat.TRIG);
 				System.out.println("\n##################### \n");
-			} else {
-				actualConforms = true;
 			}
 
+		} finally {
+			sailRepository.shutDown();
 		}
 
 		assertEquals(expected.conforms, actualConforms);
@@ -204,7 +219,7 @@ public class W3cComplianceTest {
 
 		W3C_shaclTestValidate(URL filename) {
 			this.filename = filename.getPath();
-			SailRepository sailRepository = Utils.getSailRepository(filename);
+			SailRepository sailRepository = Utils.getSailRepository(filename, RDFFormat.TURTLE);
 			try (SailRepositoryConnection connection = sailRepository.getConnection()) {
 				try (Stream<Statement> stream = connection.getStatements(null, SHACL.CONFORMS, null).stream()) {
 					conforms = stream
@@ -212,7 +227,7 @@ public class W3cComplianceTest {
 							.map(o -> (Literal) o)
 							.map(Literal::booleanValue)
 							.findFirst()
-							.get();
+							.orElseThrow();
 				}
 			}
 		}

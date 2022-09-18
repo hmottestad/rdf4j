@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.resultio.sparqljson;
 
@@ -20,11 +23,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Triple;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.QueryResultHandlerException;
 import org.eclipse.rdf4j.query.impl.MapBindingSet;
@@ -117,7 +123,7 @@ public abstract class AbstractSPARQLJSONParser extends AbstractQueryResultParser
 					"Internal error: Did not specify whether to parse as either boolean and/or tuple");
 		}
 
-		JsonParser jp = null;
+		JsonParser jp;
 
 		boolean result = false;
 		try {
@@ -340,7 +346,7 @@ public abstract class AbstractSPARQLJSONParser extends AbstractQueryResultParser
 			if (TYPE.equals(fieldName)) {
 				type = jp.nextTextValue();
 				if (TRIPLE_STARDOG.equals(type)) {
-					// Stardog RDF* serialization dialect does not wrap the triple in a value object
+					// Stardog RDF-star serialization dialect does not wrap the triple in a value object
 					triple = parseStardogTripleValue(jp, type);
 					// avoid reading away the next end-of-object token by jumping out of the loop.
 					break;
@@ -457,7 +463,20 @@ public abstract class AbstractSPARQLJSONParser extends AbstractQueryResultParser
 			if (language != null) {
 				result = valueFactory.createLiteral(value, language);
 			} else if (datatype != null) {
-				result = valueFactory.createLiteral(value, valueFactory.createIRI(datatype));
+				IRI datatypeIri;
+				datatypeIri = valueFactory.createIRI(datatype);
+
+				// For broken SPARQL endpoints which return LANGSTRING without a language, fall back
+				// to using STRING as the datatype
+				if (RDF.LANGSTRING.equals(datatypeIri) && language == null) {
+					logger.debug(
+							"rdf:langString typed literal missing language tag: '{}'. Falling back to xsd:string.",
+							StringUtils.abbreviate(value, 10)
+					);
+					datatypeIri = XSD.STRING;
+				}
+
+				result = valueFactory.createLiteral(value, datatypeIri);
 			} else {
 				result = valueFactory.createLiteral(value);
 			}

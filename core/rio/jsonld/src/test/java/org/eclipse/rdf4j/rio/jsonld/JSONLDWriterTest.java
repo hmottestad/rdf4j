@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.rio.jsonld;
 
@@ -123,6 +126,29 @@ public class JSONLDWriterTest extends RDFWriterTest {
 					model.getNamespaces().size() >= 1);
 			assertEquals(exNs, model.getNamespace("ex").get().getName());
 		}
+	}
+
+	/**
+	 * Test if the JSON-LD writer honors the "native RDF type" setting.
+	 */
+	@Test
+	public void testNativeRDFTypes() {
+		IRI subject = vf.createIRI(exNs, "uri1");
+		IRI predicate = vf.createIRI(exNs, "uri2");
+		Literal object = vf.createLiteral(true);
+		Statement stmt = vf.createStatement(subject, predicate, object);
+
+		StringWriter w = new StringWriter();
+		RDFWriter rdfWriter = rdfWriterFactory.getWriter(w);
+		rdfWriter.getWriterConfig().set(JSONLDSettings.JSONLD_MODE, JSONLDMode.COMPACT);
+		rdfWriter.getWriterConfig().set(JSONLDSettings.COMPACT_ARRAYS, true);
+		rdfWriter.getWriterConfig().set(JSONLDSettings.USE_NATIVE_TYPES, true);
+
+		rdfWriter.startRDF();
+		rdfWriter.handleStatement(stmt);
+		rdfWriter.endRDF();
+
+		assertTrue("Does contain @type", !w.toString().contains("@type"));
 	}
 
 	@Override

@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.console.command;
 
@@ -153,10 +156,10 @@ public abstract class QueryEvaluator extends ConsoleCommand {
 	}
 
 	/**
-	 * Execute a SPARQL or SERQL query, defaults to SPARQL
+	 * Execute a SPARQL query
 	 *
 	 * @param command   to execute
-	 * @param operation "sparql", "serql", "base" or SPARQL query form
+	 * @param operation "sparql", "base" or SPARQL query form
 	 */
 	public void executeQuery(final String command, final String operation) {
 		Repository repository = state.getRepository();
@@ -167,8 +170,6 @@ public abstract class QueryEvaluator extends ConsoleCommand {
 
 		if (sparqlQueryStart.contains(operation)) {
 			parseAndEvaluateQuery(QueryLanguage.SPARQL, command);
-		} else if ("serql".equals(operation)) {
-			parseAndEvaluateQuery(QueryLanguage.SERQL, command.substring("serql".length()));
 		} else if ("sparql".equals(operation)) {
 			parseAndEvaluateQuery(QueryLanguage.SPARQL, command.substring("sparql".length()));
 		} else {
@@ -248,7 +249,6 @@ public abstract class QueryEvaluator extends ConsoleCommand {
 	}
 
 	/**
-	 * Parse and evaluate a SERQL or SPARQL query. Check if query is multi-line or to be read from input file, and check
 	 * if results are to be written to an output file.
 	 *
 	 * @param queryLn   query language
@@ -368,7 +368,7 @@ public abstract class QueryEvaluator extends ConsoleCommand {
 	}
 
 	/**
-	 * Evaluate a SPARQL or SERQL query that has already been parsed
+	 * Evaluate a SPARQL query that has already been parsed
 	 *
 	 * @param queryLn query language
 	 * @param query   parsed query
@@ -409,7 +409,7 @@ public abstract class QueryEvaluator extends ConsoleCommand {
 	}
 
 	/**
-	 * Add namespace prefixes to SPARQL or SERQL query
+	 * Add namespace prefixes to SPARQL query
 	 *
 	 * @param queryString query string
 	 * @return query string with prefixes

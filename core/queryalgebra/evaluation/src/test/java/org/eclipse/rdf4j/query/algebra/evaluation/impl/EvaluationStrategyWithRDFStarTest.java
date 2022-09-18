@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.algebra.evaluation.impl;
 
@@ -50,7 +53,7 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class EvaluationStrategyWithRDFStarTest {
 
-	@Parameters(name = "RDF*={0}")
+	@Parameters(name = "RDF-star={0}")
 	public static Object[] params() {
 		return new Object[] { false, true };
 	}
@@ -59,7 +62,7 @@ public class EvaluationStrategyWithRDFStarTest {
 	public boolean bRDFStarData;
 
 	// the triples over which the evaluations is carried
-	private ArrayList<Triple> triples = new ArrayList<>();
+	private final ArrayList<Triple> triples = new ArrayList<>();
 
 	ValueFactory vf = SimpleValueFactory.getInstance();
 
@@ -81,7 +84,7 @@ public class EvaluationStrategyWithRDFStarTest {
 				IRI pred, Value obj)
 				throws QueryEvaluationException {
 			return new AbstractCloseableIteration<Triple, QueryEvaluationException>() {
-				Iterator<Triple> iter = triples.iterator();
+				final Iterator<Triple> iter = triples.iterator();
 
 				@Override
 				public boolean hasNext()
@@ -155,8 +158,6 @@ public class EvaluationStrategyWithRDFStarTest {
 
 	}
 
-	;
-
 	@Before
 	public void setUp() throws Exception {
 		// prepare data
@@ -168,11 +169,7 @@ public class EvaluationStrategyWithRDFStarTest {
 
 		baseSource = new CommonBaseSource();
 
-		tripleRefNode = new TripleRef();
-		tripleRefNode.setSubjectVar(new Var("s"));
-		tripleRefNode.setPredicateVar(new Var("p"));
-		tripleRefNode.setObjectVar(new Var("o"));
-		tripleRefNode.setExprVar(new Var("extern"));
+		tripleRefNode = new TripleRef(new Var("s"), new Var("p"), new Var("o"), new Var("extern"));
 
 		strategy = new StrictEvaluationStrategy(createSource(), null);
 	}

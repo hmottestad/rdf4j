@@ -1,13 +1,17 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.resultio.helpers;
 
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,6 +31,7 @@ import org.eclipse.rdf4j.query.resultio.TupleQueryResultParser;
  *
  * @author James Leigh
  */
+@Deprecated(since = "4.1.0")
 public class BackgroundTupleResult extends IteratingTupleQueryResult implements Runnable, TupleQueryResultHandler {
 
 	private final TupleQueryResultParser parser;
@@ -41,12 +46,12 @@ public class BackgroundTupleResult extends IteratingTupleQueryResult implements 
 
 	private final CountDownLatch finishedParsing = new CountDownLatch(1);
 
-	public BackgroundTupleResult(TupleQueryResultParser parser, InputStream in) {
-		this(new QueueCursor<>(10), parser, in);
+	public BackgroundTupleResult(TupleQueryResultParser parser, InputStream in, WeakReference<?> callerRef) {
+		this(new QueueCursor<>(10, callerRef), parser, in);
 	}
 
 	public BackgroundTupleResult(QueueCursor<BindingSet> queue, TupleQueryResultParser parser, InputStream in) {
-		super(Collections.<String>emptyList(), queue);
+		super(Collections.emptyList(), queue);
 		this.queue = queue;
 		this.parser = parser;
 		this.in = in;

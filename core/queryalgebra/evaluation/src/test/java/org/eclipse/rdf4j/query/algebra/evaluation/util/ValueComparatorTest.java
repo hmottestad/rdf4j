@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.algebra.evaluation.util;
 
@@ -26,21 +29,21 @@ import org.junit.Test;
  */
 public class ValueComparatorTest {
 
-	private ValueFactory vf = SimpleValueFactory.getInstance();
+	private final ValueFactory vf = SimpleValueFactory.getInstance();
 
-	private BNode bnode1 = vf.createBNode();
+	private final BNode bnode1 = vf.createBNode();
 
-	private BNode bnode2 = vf.createBNode();
+	private final BNode bnode2 = vf.createBNode();
 
-	private IRI uri1 = vf.createIRI("http://script.example/Latin");
+	private final IRI uri1 = vf.createIRI("http://script.example/Latin");
 
-	private IRI uri2 = vf.createIRI("http://script.example/Кириллица");
+	private final IRI uri2 = vf.createIRI("http://script.example/Кириллица");
 
-	private IRI uri3 = vf.createIRI("http://script.example/日本語");
+	private final IRI uri3 = vf.createIRI("http://script.example/日本語");
 
-	private Literal typed1 = vf.createLiteral("http://script.example/Latin", XSD.STRING);
+	private final Literal typed1 = vf.createLiteral("http://script.example/Latin", XSD.STRING);
 
-	private ValueComparator cmp = new ValueComparator();
+	private final ValueComparator cmp = new ValueComparator();
 
 	@Test
 	public void testBothNull() throws Exception {

@@ -1,13 +1,17 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.rio.turtle;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.After;
 import org.junit.Before;
@@ -198,10 +202,35 @@ public class TurtleUtilTest {
 	/**
 	 * Test method for {@link org.eclipse.rdf4j.rio.turtle.TurtleUtil#isPN_LOCAL(java.lang.String)}.
 	 */
-	@Ignore("TODO: Implement me")
 	@Test
 	public final void testIsPN_LOCAL() {
+		assertTrue(TurtleUtil.isPN_LOCAL("2bar"));
+		assertTrue(TurtleUtil.isPN_LOCAL("foobar"));
+		assertTrue(TurtleUtil.isPN_LOCAL("_foobar"));
+		assertTrue(TurtleUtil.isPN_LOCAL("foo-bar"));
+		assertTrue(TurtleUtil.isPN_LOCAL("foo.bar"));
+		assertTrue(TurtleUtil.isPN_LOCAL(":foobar"));
+		assertTrue(TurtleUtil.isPN_LOCAL(":foobär"));
+		assertTrue(TurtleUtil.isPN_LOCAL(""));
 
+		assertFalse(TurtleUtil.isPN_LOCAL(" "));
+		assertFalse(TurtleUtil.isPN_LOCAL("foo$bar"));
+		assertFalse(TurtleUtil.isPN_LOCAL("$foobar"));
+		assertFalse(TurtleUtil.isPN_LOCAL("foo~bar"));
+		assertFalse(TurtleUtil.isPN_LOCAL("~foobar"));
+		assertFalse(TurtleUtil.isPN_LOCAL("-foobar"));
+		assertFalse(TurtleUtil.isPN_LOCAL("[foobar]"));
+		assertFalse(TurtleUtil.isPN_LOCAL("foobar]"));
+		assertFalse(TurtleUtil.isPN_LOCAL("(foobar)"));
+		assertFalse(TurtleUtil.isPN_LOCAL("foobar)"));
+		assertFalse(TurtleUtil.isPN_LOCAL("{foobar}"));
+		assertFalse(TurtleUtil.isPN_LOCAL("foobar}"));
+		assertFalse(TurtleUtil.isPN_LOCAL(".foobar"));
+		assertFalse(TurtleUtil.isPN_LOCAL("foo\tbar"));
+		assertFalse(TurtleUtil.isPN_LOCAL("foo\rbar"));
+		assertFalse(TurtleUtil.isPN_LOCAL("foo\tbar"));
+		assertFalse(TurtleUtil.isPN_LOCAL("foo\nbar"));
+		assertFalse(TurtleUtil.isPN_LOCAL("*foobar"));
 	}
 
 	/**

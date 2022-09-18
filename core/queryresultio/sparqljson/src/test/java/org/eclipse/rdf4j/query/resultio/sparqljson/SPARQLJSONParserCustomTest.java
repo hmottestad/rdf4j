@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2018 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.resultio.sparqljson;
 
@@ -28,6 +31,7 @@ import org.eclipse.rdf4j.query.resultio.QueryResultParseException;
 import org.eclipse.rdf4j.query.resultio.QueryResultParser;
 import org.eclipse.rdf4j.query.resultio.TupleQueryResultFormat;
 import org.eclipse.rdf4j.query.resultio.helpers.QueryResultCollector;
+import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.helpers.JSONSettings;
 import org.eclipse.rdf4j.rio.helpers.ParseErrorCollector;
 import org.junit.Before;
@@ -417,5 +421,27 @@ public class SPARQLJSONParserCustomTest {
 		thrown.expectMessage("Could not parse SPARQL/JSON");
 		parser.set(JSONSettings.STRICT_DUPLICATE_DETECTION, false);
 		parser.parseQueryResult(stringToInputStream(STRICT_DUPLICATE_DETECTION_TEST_STRING));
+	}
+
+	@Test
+	public void testLangMissingOnStringLang() throws Exception {
+		ParserConfig config = new ParserConfig();
+		QueryResultCollector handler = new QueryResultCollector();
+		ParseErrorCollector errorCollector = new ParseErrorCollector();
+		QueryResultParser aParser = QueryResultIO.createTupleParser(TupleQueryResultFormat.JSON)
+				.setQueryResultHandler(handler)
+				.setParserConfig(config)
+				.setParseErrorListener(errorCollector);
+
+		aParser.parseQueryResult(this.getClass()
+				.getResourceAsStream("/sparqljson/dbpedia-stringlang-bug.srj"));
+
+		assertEquals(2, handler.getBindingSets().size());
+		assertEquals("Altin Lala", handler.getBindingSets().get(0).getBinding("lc").getValue().stringValue());
+		assertEquals("http://de.dbpedia.org/resource/Altin_Lala",
+				handler.getBindingSets().get(0).getBinding("subj").getValue().stringValue());
+		assertEquals("Hans Lala", handler.getBindingSets().get(1).getBinding("lc").getValue().stringValue());
+		assertEquals("http://de.dbpedia.org/resource/Hans_Lala",
+				handler.getBindingSets().get(1).getBinding("subj").getValue().stringValue());
 	}
 }

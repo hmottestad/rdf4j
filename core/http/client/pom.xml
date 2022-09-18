@@ -4,12 +4,17 @@
 	<parent>
 		<groupId>org.eclipse.rdf4j</groupId>
 		<artifactId>rdf4j-http</artifactId>
-		<version>3.6.0-SNAPSHOT</version>
+		<version>4.2.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>rdf4j-http-client</artifactId>
 	<name>RDF4J: HTTP client</name>
 	<description>Client functionality for communicating with an RDF4J server over HTTP.</description>
 	<dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>rdf4j-common-transaction</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>rdf4j-http-protocol</artifactId>
@@ -37,11 +42,6 @@
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>rdf4j-util</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
 			<artifactId>rdf4j-queryresultio-binary</artifactId>
 			<version>${project.version}</version>
 			<scope>runtime</scope>
@@ -59,6 +59,7 @@
 			<!-- include newer codec version for httpclient -->
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
+			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -103,6 +104,11 @@
 			<artifactId>rdf4j-queryresultio-sparqljson</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>rdf4j-sail-api</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 	</dependencies>
 	<build>

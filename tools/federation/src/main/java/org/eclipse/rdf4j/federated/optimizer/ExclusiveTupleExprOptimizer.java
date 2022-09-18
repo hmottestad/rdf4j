@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.federated.optimizer;
 
@@ -14,7 +17,7 @@ import org.eclipse.rdf4j.federated.exception.OptimizationException;
 import org.eclipse.rdf4j.query.algebra.ArbitraryLengthPath;
 import org.eclipse.rdf4j.query.algebra.Service;
 import org.eclipse.rdf4j.query.algebra.TupleExpr;
-import org.eclipse.rdf4j.query.algebra.helpers.AbstractQueryModelVisitor;
+import org.eclipse.rdf4j.query.algebra.helpers.AbstractSimpleQueryModelVisitor;
 
 /**
  * A specialized optimizer which identifies and marks {@link ExclusiveTupleExpr}.
@@ -22,8 +25,12 @@ import org.eclipse.rdf4j.query.algebra.helpers.AbstractQueryModelVisitor;
  * @author Andreas Schwarte
  *
  */
-public class ExclusiveTupleExprOptimizer extends AbstractQueryModelVisitor<OptimizationException>
+public class ExclusiveTupleExprOptimizer extends AbstractSimpleQueryModelVisitor<OptimizationException>
 		implements FedXOptimizer {
+
+	public ExclusiveTupleExprOptimizer() {
+		super(true);
+	}
 
 	@Override
 	public void optimize(TupleExpr tupleExpr) {

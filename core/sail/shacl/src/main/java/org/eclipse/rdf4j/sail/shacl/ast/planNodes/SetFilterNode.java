@@ -1,14 +1,18 @@
 /*******************************************************************************
- * .Copyright (c) 2020 Eclipse RDF4J contributors.
+ * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 
 package org.eclipse.rdf4j.sail.shacl.ast.planNodes;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.text.StringEscapeUtils;
@@ -26,9 +30,8 @@ public class SetFilterNode implements PlanNode {
 	private ValidationExecutionLogger validationExecutionLogger;
 
 	public SetFilterNode(Set<Value> targetNodeList, PlanNode parent, int index, boolean returnValid) {
-		parent = PlanNodeHelper.handleSorting(this, parent);
+		this.parent = PlanNodeHelper.handleSorting(this, parent);
 		this.targetNodeList = targetNodeList;
-		this.parent = parent;
 		this.index = index;
 		this.returnValid = returnValid;
 	}
@@ -54,18 +57,18 @@ public class SetFilterNode implements PlanNode {
 			}
 
 			@Override
-			public void close() throws SailException {
+			public void localClose() throws SailException {
 				iterator.close();
 			}
 
 			@Override
-			boolean localHasNext() throws SailException {
+			protected boolean localHasNext() throws SailException {
 				calulateNext();
 				return next != null;
 			}
 
 			@Override
-			ValidationTuple loggingNext() throws SailException {
+			protected ValidationTuple loggingNext() throws SailException {
 				calulateNext();
 
 				ValidationTuple temp = next;
@@ -74,10 +77,6 @@ public class SetFilterNode implements PlanNode {
 				return temp;
 			}
 
-			@Override
-			public void remove() throws SailException {
-
-			}
 		};
 	}
 
@@ -124,5 +123,23 @@ public class SetFilterNode implements PlanNode {
 	@Override
 	public boolean requiresSorted() {
 		return false;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		SetFilterNode that = (SetFilterNode) o;
+		return index == that.index && returnValid == that.returnValid && targetNodeList.equals(that.targetNodeList)
+				&& parent.equals(that.parent);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(targetNodeList, parent, index, returnValid);
 	}
 }

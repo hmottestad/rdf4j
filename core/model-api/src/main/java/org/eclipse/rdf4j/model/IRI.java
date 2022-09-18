@@ -1,15 +1,17 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.model;
 
 /**
- * An Internationalized Resource Identifier (IRI). IRIs are an extension of the existing {@link URI}: while URIs are
- * limited to a subset of the ASCII character set, IRIs may contain characters from the Universal Character Set
+ * An Internationalized Resource Identifier (IRI). IRIs may contain characters from the Universal Character Set
  * (Unicode/ISO 10646), including Chinese or Japanese kanji, Korean, Cyrillic characters, and so forth. It is defined by
  * RFC 3987.
  * <p>
@@ -30,8 +32,7 @@ package org.eclipse.rdf4j.model;
  *           {@link #equals(Object)} and {@link #hashCode()} methods must be implemented exactly as described in their
  *           specs.
  */
-@SuppressWarnings("deprecation")
-public interface IRI extends URI, Resource {
+public interface IRI extends Resource {
 
 	@Override
 	default boolean isIRI() {
@@ -45,7 +46,6 @@ public interface IRI extends URI, Resource {
 	 *
 	 * @return the namespace of this IRI
 	 */
-	@Override
 	String getNamespace();
 
 	/**
@@ -55,7 +55,6 @@ public interface IRI extends URI, Resource {
 	 *
 	 * @return the local name of this IRI
 	 */
-	@Override
 	String getLocalName();
 
 	/**
@@ -63,8 +62,8 @@ public interface IRI extends URI, Resource {
 	 *
 	 * @param o the object to compare this IRI to
 	 *
-	 * @return {@code true}, if the other object is an instance of {@code IRI} and their {@linkplain #toString() string
-	 *         values} are equal; {@code false}, otherwise
+	 * @return {@code true}, if the other object is an instance of {@code IRI} and their {@linkplain #stringValue()
+	 *         string values} are equal; {@code false}, otherwise
 	 */
 	@Override
 	boolean equals(Object o);
@@ -72,7 +71,7 @@ public interface IRI extends URI, Resource {
 	/**
 	 * Computes the hash code of this IRI.
 	 *
-	 * @return a hash code for this IRI computed as {@link #toString()}{@code .hashCode()}
+	 * @return a hash code for this IRI computed as {@link #stringValue()}{@code .hashCode()}
 	 */
 	@Override
 	int hashCode();

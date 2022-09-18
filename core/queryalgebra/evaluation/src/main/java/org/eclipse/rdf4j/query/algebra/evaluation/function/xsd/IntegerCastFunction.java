@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2016 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.algebra.evaluation.function.xsd;
 
@@ -43,7 +46,7 @@ public abstract class IntegerCastFunction extends CastFunction {
 				// decimals, floats and doubles must be processed
 				// separately, see
 				// http://www.w3.org/TR/xpath-functions/#casting-from-primitive-to-primitive
-				BigInteger integerValue = null;
+				BigInteger integerValue;
 				if (XSD.DECIMAL.equals(datatype) || XMLDatatypeUtil.isFloatingPointDatatype(datatype)) {
 					integerValue = literal.decimalValue().toBigInteger();
 				} else {

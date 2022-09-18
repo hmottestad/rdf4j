@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.federated.evaluation.join;
 
@@ -46,7 +49,7 @@ public class ParallelLeftJoinTask extends ParallelTaskBase<BindingSet> {
 	}
 
 	@Override
-	public CloseableIteration<BindingSet, QueryEvaluationException> performTask() throws Exception {
+	protected CloseableIteration<BindingSet, QueryEvaluationException> performTaskInternal() throws Exception {
 
 		return new FedXLeftJoinIteration(strategy, join, leftBindings);
 
@@ -73,7 +76,7 @@ public class ParallelLeftJoinTask extends ParallelTaskBase<BindingSet> {
 
 		private CloseableIteration<BindingSet, QueryEvaluationException> rightIter;
 
-		private AtomicBoolean exhausted = new AtomicBoolean(false);
+		private final AtomicBoolean exhausted = new AtomicBoolean(false);
 
 		public FedXLeftJoinIteration(FederationEvalStrategy strategy, LeftJoin join, BindingSet leftBindings) {
 			super();
@@ -92,6 +95,7 @@ public class ParallelLeftJoinTask extends ParallelTaskBase<BindingSet> {
 				rightIter = strategy.evaluate(join.getRightArg(), leftBindings);
 
 				if (!rightIter.hasNext() && !exhausted.getAndSet(true)) {
+					rightIter.close();
 					return leftBindings;
 				}
 			}
@@ -123,6 +127,9 @@ public class ParallelLeftJoinTask extends ParallelTaskBase<BindingSet> {
 					return leftBindings;
 				}
 			}
+
+			// proactively close
+			rightIter.close();
 
 			return null;
 		}

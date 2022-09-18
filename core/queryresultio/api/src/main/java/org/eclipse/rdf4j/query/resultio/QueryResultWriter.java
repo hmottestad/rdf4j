@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.resultio;
 
@@ -79,18 +82,18 @@ public interface QueryResultWriter extends QueryResultHandler {
 	 *
 	 * @param config a writer configuration object.
 	 */
-	public void setWriterConfig(WriterConfig config);
+	void setWriterConfig(WriterConfig config);
 
 	/**
 	 * Retrieves the current writer configuration as a single object.
 	 *
 	 * @return a writer configuration object representing the current configuration of the writer.
 	 */
-	public WriterConfig getWriterConfig();
+	WriterConfig getWriterConfig();
 
 	/**
 	 * @return A collection of {@link RioSetting}s that are supported by this {@link QueryResultWriter}.
 	 */
-	public Collection<RioSetting<?>> getSupportedSettings();
+	Collection<RioSetting<?>> getSupportedSettings();
 
 }

@@ -1,14 +1,15 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.algebra.evaluation.iterator;
 
-import java.util.ArrayDeque;
-import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
 
@@ -18,58 +19,58 @@ import org.eclipse.rdf4j.common.iteration.Iterations;
 import org.eclipse.rdf4j.common.iteration.LookAheadIteration;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.MutableBindingSet;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.eclipse.rdf4j.query.algebra.QueryModelNode;
 import org.eclipse.rdf4j.query.algebra.StatementPattern.Scope;
 import org.eclipse.rdf4j.query.algebra.TupleExpr;
 import org.eclipse.rdf4j.query.algebra.Var;
 import org.eclipse.rdf4j.query.algebra.ZeroLengthPath;
+import org.eclipse.rdf4j.query.algebra.evaluation.EvaluationStrategy;
 import org.eclipse.rdf4j.query.algebra.evaluation.QueryBindingSet;
-import org.eclipse.rdf4j.query.algebra.evaluation.impl.StrictEvaluationStrategy;
 import org.eclipse.rdf4j.query.algebra.helpers.AbstractQueryModelVisitor;
-import org.eclipse.rdf4j.query.impl.MapBindingSet;
 
 public class PathIteration extends LookAheadIteration<BindingSet, QueryEvaluationException> {
 
 	/**
 	 *
 	 */
-	private final StrictEvaluationStrategy evaluationStrategyImpl;
+	private final EvaluationStrategy strategy;
 
 	private long currentLength;
 
 	private CloseableIteration<BindingSet, QueryEvaluationException> currentIter;
 
-	private BindingSet bindings;
+	private final BindingSet bindings;
 
-	private Scope scope;
+	private final Scope scope;
 
-	private Var startVar;
+	private final Var startVar;
 
-	private Var endVar;
+	private final Var endVar;
 
 	private final boolean startVarFixed;
 
 	private final boolean endVarFixed;
 
-	private Queue<ValuePair> valueQueue;
+	private final Queue<ValuePair> valueQueue;
 
 	private final Set<ValuePair> reportedValues;
 
-	private final Set<ValuePair> unreportedValues;;
+	private final Set<ValuePair> unreportedValues;
 
-	private TupleExpr pathExpression;
+	private final TupleExpr pathExpression;
 
-	private Var contextVar;
+	private final Var contextVar;
 
 	private ValuePair currentVp;
 
 	private static final String JOINVAR_PREFIX = "intermediate_join_";
 
-	public PathIteration(StrictEvaluationStrategy evaluationStrategyImpl, Scope scope, Var startVar,
+	public PathIteration(EvaluationStrategy strategy, Scope scope, Var startVar,
 			TupleExpr pathExpression, Var endVar, Var contextVar, long minLength, BindingSet bindings)
 			throws QueryEvaluationException {
-		this.evaluationStrategyImpl = evaluationStrategyImpl;
+		this.strategy = strategy;
 		this.scope = scope;
 		this.startVar = startVar;
 		this.endVar = endVar;
@@ -83,9 +84,9 @@ public class PathIteration extends LookAheadIteration<BindingSet, QueryEvaluatio
 		this.currentLength = minLength;
 		this.bindings = bindings;
 
-		this.reportedValues = makeSet();
-		this.unreportedValues = makeSet();
-		this.valueQueue = makeQueue();
+		this.reportedValues = strategy.makeSet();
+		this.unreportedValues = strategy.makeSet();
+		this.valueQueue = strategy.makeQueue();
 
 		createIteration();
 	}
@@ -93,20 +94,23 @@ public class PathIteration extends LookAheadIteration<BindingSet, QueryEvaluatio
 	@Override
 	protected BindingSet getNextElement() throws QueryEvaluationException {
 		again: while (true) {
-			while (!currentIter.hasNext()) {
+			while (currentIter != null && !currentIter.hasNext()) {
 				Iterations.closeCloseable(currentIter);
 				createIteration();
 				// stop condition: if the iter is an EmptyIteration
-				if (currentIter instanceof EmptyIteration<?, ?>) {
+				if (currentIter == null) {
 					break;
 				}
 			}
 
-			while (currentIter.hasNext()) {
-				BindingSet nextElement = currentIter.next();
+			while (currentIter != null && currentIter.hasNext()) {
+				BindingSet potentialNextElement = currentIter.next();
+				MutableBindingSet nextElement;
 				// if it is not a compatible type of BindingSet
-				if (!(nextElement instanceof QueryBindingSet) && !(nextElement instanceof MapBindingSet)) {
-					nextElement = new QueryBindingSet(nextElement);
+				if (potentialNextElement instanceof QueryBindingSet) {
+					nextElement = (MutableBindingSet) potentialNextElement;
+				} else {
+					nextElement = new QueryBindingSet(potentialNextElement);
 				}
 
 				if (!startVarFixed && !endVarFixed && currentVp != null) {
@@ -195,14 +199,8 @@ public class PathIteration extends LookAheadIteration<BindingSet, QueryEvaluatio
 		}
 	}
 
-	private void addBinding(BindingSet bs, String name, Value value) {
-		if (bs instanceof QueryBindingSet) {
-			((QueryBindingSet) bs).addBinding(name, value);
-		} else if (bs instanceof MapBindingSet) {
-			((MapBindingSet) bs).addBinding(name, value);
-		} else {
-			throw new IllegalStateException("Unexpected BindingSet implementation: " + bs.getClass());
-		}
+	private void addBinding(MutableBindingSet bs, String name, Value value) {
+		bs.addBinding(name, value);
 	}
 
 	@Override
@@ -258,10 +256,11 @@ public class PathIteration extends LookAheadIteration<BindingSet, QueryEvaluatio
 
 		if (isUnbound(startVar, bindings) || isUnbound(endVar, bindings)) {
 			// the variable must remain unbound for this solution see https://www.w3.org/TR/sparql11-query/#assignment
-			currentIter = new EmptyIteration<>();
+			currentIter = null;
 		} else if (currentLength == 0L) {
-			ZeroLengthPath zlp = new ZeroLengthPath(scope, startVar, endVar, contextVar);
-			currentIter = this.evaluationStrategyImpl.evaluate(zlp, bindings);
+			ZeroLengthPath zlp = new ZeroLengthPath(scope, startVar.clone(), endVar.clone(),
+					contextVar != null ? contextVar.clone() : null);
+			currentIter = this.strategy.evaluate(zlp, bindings);
 			currentLength++;
 		} else if (currentLength == 1) {
 			TupleExpr pathExprClone = pathExpression.clone();
@@ -272,7 +271,7 @@ public class PathIteration extends LookAheadIteration<BindingSet, QueryEvaluatio
 				VarReplacer replacer = new VarReplacer(endVar, replacement, 0, false);
 				pathExprClone.visit(replacer);
 			}
-			currentIter = this.evaluationStrategyImpl.evaluate(pathExprClone, bindings);
+			currentIter = this.strategy.evaluate(pathExprClone, bindings);
 			currentLength++;
 		} else {
 
@@ -315,9 +314,9 @@ public class PathIteration extends LookAheadIteration<BindingSet, QueryEvaluatio
 					pathExprClone.visit(replacer);
 				}
 
-				currentIter = this.evaluationStrategyImpl.evaluate(pathExprClone, bindings);
+				currentIter = this.strategy.evaluate(pathExprClone, bindings);
 			} else {
-				currentIter = new EmptyIteration<>();
+				currentIter = null;
 			}
 			currentLength++;
 
@@ -330,14 +329,6 @@ public class PathIteration extends LookAheadIteration<BindingSet, QueryEvaluatio
 		} else {
 			return bindings.hasBinding(var.getName()) && bindings.getValue(var.getName()) == null;
 		}
-	}
-
-	protected Set<ValuePair> makeSet() {
-		return new HashSet<>(64, 0.9f);
-	}
-
-	protected Queue<ValuePair> makeQueue() {
-		return new ArrayDeque<>();
 	}
 
 	protected static class ValuePair {
@@ -406,13 +397,13 @@ public class PathIteration extends LookAheadIteration<BindingSet, QueryEvaluatio
 
 	class VarReplacer extends AbstractQueryModelVisitor<QueryEvaluationException> {
 
-		private Var toBeReplaced;
+		private final Var toBeReplaced;
 
-		private Var replacement;
+		private final Var replacement;
 
-		private long index;
+		private final long index;
 
-		private boolean replaceAnons;
+		private final boolean replaceAnons;
 
 		public VarReplacer(Var toBeReplaced, Var replacement, long index, boolean replaceAnons) {
 			this.toBeReplaced = toBeReplaced;
@@ -426,13 +417,11 @@ public class PathIteration extends LookAheadIteration<BindingSet, QueryEvaluatio
 			if (toBeReplaced.equals(var) || (toBeReplaced.isAnonymous() && var.isAnonymous()
 					&& (toBeReplaced.hasValue() && toBeReplaced.getValue().equals(var.getValue())))) {
 				QueryModelNode parent = var.getParentNode();
-				parent.replaceChildNode(var, replacement);
-				replacement.setParentNode(parent);
+				parent.replaceChildNode(var, replacement.clone());
 			} else if (replaceAnons && var.isAnonymous() && !var.hasValue()) {
 				Var replacementVar = createAnonVar("anon-replace-" + var.getName() + index);
 				QueryModelNode parent = var.getParentNode();
 				parent.replaceChildNode(var, replacementVar);
-				replacementVar.setParentNode(parent);
 			}
 		}
 

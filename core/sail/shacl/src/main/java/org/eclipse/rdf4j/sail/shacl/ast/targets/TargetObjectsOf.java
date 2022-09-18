@@ -1,8 +1,18 @@
+/*******************************************************************************
+ * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Distribution License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *******************************************************************************/
+
 package org.eclipse.rdf4j.sail.shacl.ast.targets;
 
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 import org.eclipse.rdf4j.model.IRI;
@@ -10,16 +20,16 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.vocabulary.SHACL;
 import org.eclipse.rdf4j.sail.SailConnection;
-import org.eclipse.rdf4j.sail.shacl.ConnectionsGroup;
-import org.eclipse.rdf4j.sail.shacl.RdfsSubClassOfReasoner;
 import org.eclipse.rdf4j.sail.shacl.ast.StatementMatcher;
 import org.eclipse.rdf4j.sail.shacl.ast.constraintcomponents.ConstraintComponent;
 import org.eclipse.rdf4j.sail.shacl.ast.planNodes.EmptyNode;
-import org.eclipse.rdf4j.sail.shacl.ast.planNodes.ExternalFilterByPredicate;
+import org.eclipse.rdf4j.sail.shacl.ast.planNodes.FilterByPredicate;
 import org.eclipse.rdf4j.sail.shacl.ast.planNodes.PlanNode;
 import org.eclipse.rdf4j.sail.shacl.ast.planNodes.UnionNode;
 import org.eclipse.rdf4j.sail.shacl.ast.planNodes.Unique;
 import org.eclipse.rdf4j.sail.shacl.ast.planNodes.UnorderedSelect;
+import org.eclipse.rdf4j.sail.shacl.wrapper.data.ConnectionsGroup;
+import org.eclipse.rdf4j.sail.shacl.wrapper.data.RdfsSubClassOfReasoner;
 
 public class TargetObjectsOf extends Target {
 
@@ -37,46 +47,49 @@ public class TargetObjectsOf extends Target {
 	}
 
 	@Override
-	public void toModel(Resource subject, IRI predicate, Model model, Set<Resource> exported) {
+	public void toModel(Resource subject, IRI predicate, Model model, Set<Resource> cycleDetection) {
 		targetObjectsOf.forEach(t -> {
 			model.add(subject, getPredicate(), t);
 		});
 	}
 
 	@Override
-	public PlanNode getAdded(ConnectionsGroup connectionsGroup, ConstraintComponent.Scope scope) {
-		return getAddedRemovedInner(connectionsGroup, scope, connectionsGroup.getAddedStatements());
+	public PlanNode getAdded(ConnectionsGroup connectionsGroup, Resource[] dataGraph,
+			ConstraintComponent.Scope scope) {
+		return getAddedRemovedInner(connectionsGroup.getAddedStatements(), dataGraph, scope);
 	}
 
-	private PlanNode getAddedRemovedInner(ConnectionsGroup connectionsGroup, ConstraintComponent.Scope scope,
-			SailConnection connection) {
+	private PlanNode getAddedRemovedInner(SailConnection connection, Resource[] dataGraph,
+			ConstraintComponent.Scope scope) {
 
 		PlanNode planNode = targetObjectsOf.stream()
 				.map(predicate -> (PlanNode) new UnorderedSelect(connection, null,
-						predicate, null, UnorderedSelect.Mapper.ObjectScopedMapper.getFunction(scope)))
-				.reduce(UnionNode::new)
-				.orElse(new EmptyNode());
+						predicate, null, dataGraph, UnorderedSelect.Mapper.ObjectScopedMapper.getFunction(scope)))
+				.reduce(UnionNode::getInstance)
+				.orElse(EmptyNode.getInstance());
 
-		return new Unique(planNode);
+		return Unique.getInstance(planNode, false);
 	}
 
 	@Override
 	public String getQueryFragment(String subjectVariable, String objectVariable,
-			RdfsSubClassOfReasoner rdfsSubClassOfReasoner) {
-		String tempVar = "?" + UUID.randomUUID().toString().replace("-", "");
+			RdfsSubClassOfReasoner rdfsSubClassOfReasoner,
+			StatementMatcher.StableRandomVariableProvider stableRandomVariableProvider) {
+		String tempVar = stableRandomVariableProvider.next().asSparqlVariable();
 
 		return targetObjectsOf.stream()
-				.map(target -> "\n{ BIND(<" + target + "> as " + tempVar + ") \n " + objectVariable + " "
+				.map(target -> "{\nBIND(<" + target + "> as " + tempVar + ")\n" + objectVariable + " "
 						+ tempVar + " " + subjectVariable
-						+ ". } \n")
+						+ ".\n}")
 				.reduce((a, b) -> a + " UNION " + b)
 				.get();
 	}
 
 	@Override
-	public PlanNode getTargetFilter(ConnectionsGroup connectionsGroup, PlanNode parent) {
-		return new ExternalFilterByPredicate(connectionsGroup.getBaseConnection(), targetObjectsOf, parent,
-				ExternalFilterByPredicate.On.Object);
+	public PlanNode getTargetFilter(ConnectionsGroup connectionsGroup, Resource[] dataGraph,
+			PlanNode parent) {
+		return new FilterByPredicate(connectionsGroup.getBaseConnection(), targetObjectsOf, parent,
+				FilterByPredicate.On.Object, dataGraph);
 	}
 
 	@Override
@@ -89,17 +102,17 @@ public class TargetObjectsOf extends Target {
 				.map(t -> new StatementMatcher(
 						null,
 						new StatementMatcher.Variable(t),
-						object
-				)
+						object)
 				);
 	}
 
 	@Override
 	public String getTargetQueryFragment(StatementMatcher.Variable subject, StatementMatcher.Variable object,
-			RdfsSubClassOfReasoner rdfsSubClassOfReasoner) {
+			RdfsSubClassOfReasoner rdfsSubClassOfReasoner,
+			StatementMatcher.StableRandomVariableProvider stableRandomVariableProvider) {
 		assert (subject == null);
 
-		String tempVar = "?" + UUID.randomUUID().toString().replace("-", "");
+		String tempVar = stableRandomVariableProvider.next().asSparqlVariable();
 
 		if (targetObjectsOf.size() == 1) {
 
@@ -116,7 +129,7 @@ public class TargetObjectsOf extends Target {
 					.orElse("");
 
 			return tempVar + " ?predicatefjhfuewhw ?" + object.getName() + " .\n" +
-					"FILTER(?predicatefjhfuewhw in (" + in + ")) \n";
+					"FILTER(?predicatefjhfuewhw in (" + in + "))";
 		}
 
 	}

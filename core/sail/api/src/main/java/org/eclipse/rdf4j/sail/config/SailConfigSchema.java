@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.config;
 
@@ -19,20 +22,20 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 public class SailConfigSchema {
 
 	/**
-	 * The Sail API schema namespace ( <tt>http://www.openrdf.org/config/sail#</tt>).
+	 * The Sail API schema namespace ( <var>http://www.openrdf.org/config/sail#</var>).
 	 */
 	public static final String NAMESPACE = "http://www.openrdf.org/config/sail#";
 
-	/** <tt>http://www.openrdf.org/config/sail#sailType</tt> */
+	/** <var>http://www.openrdf.org/config/sail#sailType</var> */
 	public final static IRI SAILTYPE;
 
-	/** <tt>http://www.openrdf.org/config/sail#delegate</tt> */
+	/** <var>http://www.openrdf.org/config/sail#delegate</var> */
 	public final static IRI DELEGATE;
 
-	/** <tt>http://www.openrdf.org/config/sail#iterationCacheSyncTreshold</tt> */
+	/** <var>http://www.openrdf.org/config/sail#iterationCacheSyncTreshold</var> */
 	public final static IRI ITERATION_CACHE_SYNC_THRESHOLD;
 
-	/** <tt>http://www.openrdf.org/config/sail#connectionTimeOut</tt> */
+	/** <var>http://www.openrdf.org/config/sail#connectionTimeOut</var> */
 	public final static IRI CONNECTION_TIME_OUT;
 
 	static {

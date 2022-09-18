@@ -1,27 +1,49 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.parser.sparql;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
 
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Namespace;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.impl.SimpleNamespace;
+import org.eclipse.rdf4j.model.util.Values;
+import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.MalformedQueryException;
+import org.eclipse.rdf4j.query.algebra.AggregateFunctionCall;
 import org.eclipse.rdf4j.query.algebra.ArbitraryLengthPath;
+import org.eclipse.rdf4j.query.algebra.DeleteData;
 import org.eclipse.rdf4j.query.algebra.Extension;
 import org.eclipse.rdf4j.query.algebra.Filter;
+import org.eclipse.rdf4j.query.algebra.Group;
 import org.eclipse.rdf4j.query.algebra.InsertData;
 import org.eclipse.rdf4j.query.algebra.Join;
 import org.eclipse.rdf4j.query.algebra.Modify;
@@ -29,8 +51,10 @@ import org.eclipse.rdf4j.query.algebra.Order;
 import org.eclipse.rdf4j.query.algebra.Projection;
 import org.eclipse.rdf4j.query.algebra.ProjectionElem;
 import org.eclipse.rdf4j.query.algebra.ProjectionElemList;
+import org.eclipse.rdf4j.query.algebra.QueryRoot;
 import org.eclipse.rdf4j.query.algebra.Slice;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
+import org.eclipse.rdf4j.query.algebra.Sum;
 import org.eclipse.rdf4j.query.algebra.TupleExpr;
 import org.eclipse.rdf4j.query.algebra.Union;
 import org.eclipse.rdf4j.query.algebra.UpdateExpr;
@@ -40,9 +64,15 @@ import org.eclipse.rdf4j.query.parser.ParsedGraphQuery;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.ParsedUpdate;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.eclipse.rdf4j.query.parser.sparql.aggregate.AggregateCollector;
+import org.eclipse.rdf4j.query.parser.sparql.aggregate.AggregateFunction;
+import org.eclipse.rdf4j.query.parser.sparql.aggregate.AggregateFunctionFactory;
+import org.eclipse.rdf4j.query.parser.sparql.aggregate.CustomAggregateFunctionRegistry;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author jeen
@@ -51,18 +81,12 @@ public class SPARQLParserTest {
 
 	private SPARQLParser parser;
 
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		parser = new SPARQLParser();
 	}
 
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		parser = null;
 	}
@@ -77,8 +101,7 @@ public class SPARQLParserTest {
 
 		ParsedQuery q = parser.parseQuery(simpleSparqlQuery, null);
 
-		assertNotNull(q);
-		assertEquals(simpleSparqlQuery, q.getSourceString());
+		assertThat(q.getSourceString()).isEqualTo(simpleSparqlQuery);
 	}
 
 	@Test
@@ -89,7 +112,7 @@ public class SPARQLParserTest {
 			ParsedUpdate u = parser.parseUpdate(insertDataString, null);
 			fail("should have resulted in parse exception");
 		} catch (MalformedQueryException e) {
-			assertTrue(e.getMessage().contains("line 2,"));
+			assertThat(e.getMessage()).contains("line 2,");
 		}
 
 	}
@@ -102,7 +125,7 @@ public class SPARQLParserTest {
 			ParsedUpdate u = parser.parseUpdate(deleteDataString, null);
 			fail("should have resulted in parse exception");
 		} catch (MalformedQueryException e) {
-			assertTrue(e.getMessage().contains("line 2,"));
+			assertThat(e.getMessage()).contains("line 2,");
 		}
 	}
 
@@ -116,7 +139,8 @@ public class SPARQLParserTest {
 		TupleExpr te = q.getTupleExpr();
 
 		assertNotNull(te);
-
+		assertTrue(te instanceof QueryRoot);
+		te = ((QueryRoot) te).getArg();
 		assertTrue(te instanceof Slice);
 		Slice s = (Slice) te;
 		assertTrue(s.getArg() instanceof Join);
@@ -138,10 +162,11 @@ public class SPARQLParserTest {
 
 		ParsedBooleanQuery q = (ParsedBooleanQuery) parser.parseQuery(qb.toString(), null);
 		TupleExpr te = q.getTupleExpr();
-
+		assertTrue(te instanceof QueryRoot);
+		te = ((QueryRoot) te).getArg();
 		assertNotNull(te);
 		assertTrue(te instanceof Slice);
-		assertNull(te.getParentNode());
+		assertTrue(te.getParentNode() instanceof QueryRoot);
 	}
 
 	/**
@@ -168,7 +193,7 @@ public class SPARQLParserTest {
 		List<ProjectionElem> elements = projectionElemList.getElements();
 		assertNotNull(elements);
 
-		assertEquals("projection should contain all three variables", 3, elements.size());
+		assertThat(elements).hasSize(3);
 	}
 
 	@Test
@@ -189,11 +214,12 @@ public class SPARQLParserTest {
 		qb.append("SELECT *  {?a <foo:bar> \"test\"}");
 
 		ParsedTupleQuery q = (ParsedTupleQuery) parser.parseQuery(qb.toString(), null);
-		TupleExpr te = q.getTupleExpr();
-
-		assertNotNull(te);
-		assertTrue(te instanceof Projection);
-		assertNull(te.getParentNode());
+		TupleExpr tupleExpr = q.getTupleExpr();
+		assertTrue(tupleExpr instanceof QueryRoot);
+		tupleExpr = ((QueryRoot) tupleExpr).getArg();
+		assertNotNull(tupleExpr);
+		assertTrue(tupleExpr instanceof Projection);
+		assertTrue(tupleExpr.getParentNode() instanceof QueryRoot);
 	}
 
 	@Test
@@ -202,11 +228,13 @@ public class SPARQLParserTest {
 		qb.append("CONSTRUCT WHERE {?a <foo:bar> \"test\"}");
 
 		ParsedGraphQuery q = (ParsedGraphQuery) parser.parseQuery(qb.toString(), null);
-		TupleExpr te = q.getTupleExpr();
 
+		TupleExpr te = q.getTupleExpr();
+		assertTrue(te instanceof QueryRoot);
+		te = ((QueryRoot) te).getArg();
 		assertNotNull(te);
 		assertTrue(te instanceof Projection);
-		assertNull(te.getParentNode());
+		assertTrue(te.getParentNode() instanceof QueryRoot);
 	}
 
 	@Test
@@ -217,7 +245,8 @@ public class SPARQLParserTest {
 
 		assertNotNull(query);
 		TupleExpr te = query.getTupleExpr();
-
+		assertTrue(te instanceof QueryRoot);
+		te = ((QueryRoot) te).getArg();
 		assertTrue(te instanceof Projection);
 
 		te = ((Projection) te).getArg();
@@ -230,6 +259,27 @@ public class SPARQLParserTest {
 	}
 
 	@Test
+	public void testOrderByWithAliases2() throws Exception {
+		String queryString = "SELECT (?l AS ?v)\n"
+				+ "WHERE { ?s rdfs:label ?l. }\n"
+				+ "ORDER BY ?v";
+
+		ParsedQuery query = parser.parseQuery(queryString, null);
+
+		TupleExpr te = query.getTupleExpr();
+		assertThat(te).isInstanceOf(QueryRoot.class);
+		te = ((QueryRoot) te).getArg();
+		assertThat(te).isInstanceOf(Projection.class);
+
+		te = ((Projection) te).getArg();
+		assertThat(te).isInstanceOf(Order.class);
+
+		te = ((Order) te).getArg();
+		assertThat(te).isInstanceOf(Extension.class);
+
+	}
+
+	@Test
 	public void testSES1927UnequalLiteralValueConstants1() throws Exception {
 
 		StringBuilder qb = new StringBuilder();
@@ -237,7 +287,8 @@ public class SPARQLParserTest {
 
 		ParsedQuery q = parser.parseQuery(qb.toString(), null);
 		TupleExpr te = q.getTupleExpr();
-
+		assertTrue(te instanceof QueryRoot);
+		te = ((QueryRoot) te).getArg();
 		assertNotNull(te);
 
 		assertTrue(te instanceof Slice);
@@ -262,7 +313,8 @@ public class SPARQLParserTest {
 
 		ParsedQuery q = parser.parseQuery(qb.toString(), null);
 		TupleExpr te = q.getTupleExpr();
-
+		assertTrue(te instanceof QueryRoot);
+		te = ((QueryRoot) te).getArg();
 		assertNotNull(te);
 
 		assertTrue(te instanceof Slice);
@@ -289,6 +341,28 @@ public class SPARQLParserTest {
 	}
 
 	@Test
+	public void testAdditionalWhitespace_Not_In() throws Exception {
+		String query = "SELECT * WHERE { ?s ?p ?o. FILTER(?o NOT  IN (1, 2, 3)) }";
+
+		ParsedQuery parsedQuery = parser.parseQuery(query, null);
+
+		// parsing should not throw exception
+		TupleExpr tupleExpr = parsedQuery.getTupleExpr();
+
+	}
+
+	@Test
+	public void testAdditionalWhitespace_Not_Exists() throws Exception {
+		String query = "SELECT * WHERE { ?s ?p ?o. FILTER NOT  EXISTS { ?s ?p ?o } }";
+
+		ParsedQuery parsedQuery = parser.parseQuery(query, null);
+
+		// parsing should not throw exception
+		TupleExpr tupleExpr = parsedQuery.getTupleExpr();
+
+	}
+
+	@Test
 	public void testWildCardPathFixedEnd() {
 
 		String query = "PREFIX : <http://example.org/>\n ASK {:IBM ((:|!:)|(^:|!^:))* :Jane.} ";
@@ -307,6 +381,8 @@ public class SPARQLParserTest {
 
 		ParsedQuery parsedQuery = parser.parseQuery(query, null);
 		TupleExpr tupleExpr = parsedQuery.getTupleExpr();
+		assertTrue(tupleExpr instanceof QueryRoot);
+		tupleExpr = ((QueryRoot) tupleExpr).getArg();
 
 		Slice slice = (Slice) tupleExpr;
 		Union union = (Union) slice.getArg();
@@ -325,8 +401,11 @@ public class SPARQLParserTest {
 
 		ParsedQuery parsedQuery = parser.parseQuery(query, null);
 		TupleExpr tupleExpr = parsedQuery.getTupleExpr();
-
+		assertTrue(tupleExpr instanceof QueryRoot);
+		tupleExpr = ((QueryRoot) tupleExpr).getArg();
+		assertTrue(tupleExpr instanceof Slice);
 		Slice slice = (Slice) tupleExpr;
+		assertTrue(slice.getArg() instanceof Union);
 		Union union = (Union) slice.getArg();
 
 		Var leftSubjectVar = ((StatementPattern) union.getLeftArg()).getSubjectVar();
@@ -343,7 +422,9 @@ public class SPARQLParserTest {
 
 		ParsedQuery parsedQuery = parser.parseQuery(query, null);
 		TupleExpr tupleExpr = parsedQuery.getTupleExpr();
-
+		assertTrue(tupleExpr instanceof QueryRoot);
+		tupleExpr = ((QueryRoot) tupleExpr).getArg();
+		assertTrue(tupleExpr instanceof Slice);
 		Slice slice = (Slice) tupleExpr;
 
 		ArbitraryLengthPath path = (ArbitraryLengthPath) slice.getArg();
@@ -364,5 +445,499 @@ public class SPARQLParserTest {
 		Var subClassOfObjectVar = ((StatementPattern) union.getLeftArg()).getObjectVar();
 
 		assertThat(subClassOfObjectVar).isEqualTo(commentObjectVar);
+	}
+
+	@Test
+	public void testGroupByProjectionHandling_NoAggregate() {
+		String query = "SELECT DISTINCT ?s (?o AS ?o1) \n"
+				+ "WHERE {\n"
+				+ "	?s ?p ?o \n"
+				+ "} GROUP BY ?s ?o";
+
+		// should parse without error
+		parser.parseQuery(query, null);
+	}
+
+	@Test
+	public void testProjectionHandling_CustomAggregateFunction() {
+		var factory = buildDummyFactory();
+		try {
+			CustomAggregateFunctionRegistry.getInstance().add(factory);
+			String query = "prefix rj: <https://www.rdf4j.org/aggregate#>"
+					+ "SELECT (rj:x(distinct ?o) AS ?o1) \n"
+					+ "WHERE {\n"
+					+ "	?s ?p ?o \n"
+					+ "} GROUP BY ?s ?o";
+			var parsedExpression = parser.parseQuery(query, null).getTupleExpr();
+			assertTrue(parsedExpression instanceof QueryRoot);
+			parsedExpression = ((QueryRoot) parsedExpression).getArg();
+			assertTrue(parsedExpression instanceof Projection);
+			parsedExpression = ((Projection) parsedExpression).getArg();
+			assertTrue(parsedExpression instanceof Extension);
+			var extensionElements = ((Extension) parsedExpression).getElements();
+			assertEquals(1, extensionElements.size());
+			assertTrue(extensionElements.get(0).getExpr() instanceof AggregateFunctionCall);
+			assertEquals(factory.getIri(), ((AggregateFunctionCall) extensionElements.get(0).getExpr()).getIRI());
+			parsedExpression = ((Extension) parsedExpression).getArg();
+			assertTrue(parsedExpression instanceof Group);
+			assertEquals(1, ((Group) parsedExpression).getGroupElements().size());
+			assertEquals(extensionElements.get(0).getExpr(),
+					((Group) parsedExpression).getGroupElements().get(0).getOperator());
+			assertTrue(((Group) parsedExpression).getGroupElements().get(0).getOperator().isDistinct());
+		} finally {
+			CustomAggregateFunctionRegistry.getInstance().remove(factory);
+		}
+	}
+
+	@Test
+	public void testProjectionHandling_HavingCustomAggregateFunction() {
+		var factory = buildDummyFactory();
+		try {
+			CustomAggregateFunctionRegistry.getInstance().add(factory);
+			String query = "prefix rj: <https://www.rdf4j.org/aggregate#>"
+					+ "SELECT (rj:x(distinct ?o) AS ?o1) \n"
+					+ "WHERE {\n"
+					+ "	?s ?p ?o \n"
+					+ "} GROUP BY ?s \nHAVING (rj:x(distinct ?o) > 50) ";
+			var parsedExpression = parser.parseQuery(query, null).getTupleExpr();
+			assertTrue(parsedExpression instanceof QueryRoot);
+			parsedExpression = ((QueryRoot) parsedExpression).getArg();
+			assertTrue(parsedExpression instanceof Projection);
+			parsedExpression = ((Projection) parsedExpression).getArg();
+			assertTrue(parsedExpression instanceof Extension);
+			var extensionElements = ((Extension) parsedExpression).getElements();
+			assertEquals(1, extensionElements.size());
+			assertTrue(extensionElements.get(0).getExpr() instanceof AggregateFunctionCall);
+			assertEquals(factory.getIri(), ((AggregateFunctionCall) extensionElements.get(0).getExpr()).getIRI());
+			parsedExpression = ((Extension) parsedExpression).getArg();
+			assertTrue(parsedExpression instanceof Filter);
+			parsedExpression = ((Filter) parsedExpression).getArg();
+			assertTrue(parsedExpression instanceof Extension);
+			parsedExpression = ((Extension) parsedExpression).getArg();
+			assertTrue(parsedExpression instanceof Group);
+			assertEquals(2, ((Group) parsedExpression).getGroupElements().size());
+			assertEquals(extensionElements.get(0).getExpr(),
+					((Group) parsedExpression).getGroupElements().get(0).getOperator());
+			assertEquals(extensionElements.get(0).getExpr(),
+					((Group) parsedExpression).getGroupElements().get(1).getOperator());
+			assertTrue(((Group) parsedExpression).getGroupElements().get(0).getOperator().isDistinct());
+		} finally {
+			CustomAggregateFunctionRegistry.getInstance().remove(factory);
+		}
+	}
+
+	@Test
+	public void testProjectionHandling_MultipleAggregateFunction() {
+		var factory = buildDummyFactory();
+		try {
+			CustomAggregateFunctionRegistry.getInstance().add(factory);
+			String query = "prefix rj: <https://www.rdf4j.org/aggregate#>"
+					+ "SELECT (rj:x(distinct ?o) AS ?o1) (sum(?o) AS ?o2)\n"
+					+ "WHERE {\n"
+					+ "	?s ?p ?o \n"
+					+ "} GROUP BY ?s ?o";
+			var parsedExpression = parser.parseQuery(query, null).getTupleExpr();
+			assertTrue(parsedExpression instanceof QueryRoot);
+			parsedExpression = ((QueryRoot) parsedExpression).getArg();
+			assertTrue(parsedExpression instanceof Projection);
+			parsedExpression = ((Projection) parsedExpression).getArg();
+			assertTrue(parsedExpression instanceof Extension);
+			var extensionElements = ((Extension) parsedExpression).getElements();
+			assertEquals(2, extensionElements.size());
+			assertTrue(extensionElements.get(0).getExpr() instanceof AggregateFunctionCall);
+			assertTrue(extensionElements.get(1).getExpr() instanceof Sum);
+			assertEquals(factory.getIri(), ((AggregateFunctionCall) extensionElements.get(0).getExpr()).getIRI());
+			parsedExpression = ((Extension) parsedExpression).getArg();
+			assertTrue(parsedExpression instanceof Group);
+			assertEquals(2, ((Group) parsedExpression).getGroupElements().size());
+			assertEquals(extensionElements.get(0).getExpr(),
+					((Group) parsedExpression).getGroupElements().get(0).getOperator());
+			assertTrue(((Group) parsedExpression).getGroupElements().get(0).getOperator().isDistinct());
+		} finally {
+			CustomAggregateFunctionRegistry.getInstance().remove(factory);
+		}
+	}
+
+	@Test
+	public void testProjectionHandling_UnknownFunctionCallWithDistinct() {
+		String query = "prefix rj: <https://www.rdf4j.org/aggregate#>"
+				+ "SELECT (rj:x(distinct ?o) AS ?o1) \n"
+				+ "WHERE {\n"
+				+ "	?s ?p ?o \n"
+				+ "} GROUP BY ?s ?o";
+		assertDoesNotThrow(() -> parser.parseQuery(query, null));
+	}
+
+	@Test
+	public void testProjectionHandling_FunctionCallWithArgsFails() {
+		var factory = buildDummyFactory();
+		String query = "prefix rj: <https://www.rdf4j.org/aggregate#>"
+				+ "SELECT (rj:x(?o, ?p) AS ?o1) \n"
+				+ "WHERE {\n"
+				+ "	?s ?p ?o \n"
+				+ "} GROUP BY ?s ?o";
+		try {
+			CustomAggregateFunctionRegistry.getInstance().add(factory);
+			parser.parseQuery(query, null);
+			fail("Should not be able to parse function calls with multiple args");
+		} catch (Exception e) {
+			assertTrue(e instanceof IllegalArgumentException);
+		} finally {
+			CustomAggregateFunctionRegistry.getInstance().remove(factory);
+		}
+	}
+
+	@Test
+	public void testGroupByProjectionHandling_Aggregate_NonSimpleExpr() {
+		String query = "SELECT (COUNT(?s) as ?count) (?o + ?s AS ?o1) \n"
+				+ "WHERE {\n"
+				+ "	?s ?p ?o \n"
+				+ "} GROUP BY ?o";
+
+		assertThatExceptionOfType(MalformedQueryException.class).isThrownBy(() -> parser.parseQuery(query, null))
+				.withMessageStartingWith("non-aggregate expression 'MathExpr (+)");
+
+	}
+
+	@Test
+	public void testGroupByProjectionHandling_Aggregate_Alias() {
+		String query = "SELECT (COUNT(?s) as ?count) (?o AS ?o1) \n"
+				+ "WHERE {\n"
+				+ "	?s ?p ?o \n"
+				+ "} GROUP BY ?o";
+
+		// should parse without error
+		parser.parseQuery(query, null);
+	}
+
+	@Test
+	public void testGroupByProjectionHandling_Aggregate_Alias2() {
+		String query = "SELECT (COUNT(?s) as ?count) (?o AS ?o1) \n"
+				+ "WHERE {\n"
+				+ "	?s ?p ?o \n"
+				+ "} GROUP BY ?p";
+
+		assertThatExceptionOfType(MalformedQueryException.class).isThrownBy(() -> parser.parseQuery(query, null))
+				.withMessageStartingWith("non-aggregate expression 'Var (name=o)");
+	}
+
+	@Test
+	public void testGroupByProjectionHandling_Aggregate_SimpleExpr() {
+		String query = "SELECT (COUNT(?s) as ?count) ?o \n"
+				+ "WHERE {\n"
+				+ "	?s ?p ?o \n"
+				+ "} GROUP BY ?p";
+
+		assertThatExceptionOfType(MalformedQueryException.class).isThrownBy(() -> parser.parseQuery(query, null))
+				.withMessageStartingWith("variable 'o' in projection not present in GROUP BY.");
+
+	}
+
+	@Test
+	public void testGroupByProjectionHandling_Aggregate_SimpleExpr2() {
+		String query = "SELECT (COUNT(?s) as ?count) ?o \n"
+				+ "WHERE {\n"
+				+ "	?s ?p ?o \n"
+				+ "} GROUP BY ?o";
+
+		// should parse without error
+		parser.parseQuery(query, null);
+	}
+
+	@Test
+	public void testGroupByProjectionHandling_Aggregate_Constant() {
+		String query = "SELECT (COUNT(?s) as ?count) (<foo:constant> as ?constant) \n"
+				+ "WHERE {\n"
+				+ "	?s ?p ?o \n"
+				+ "} GROUP BY ?o";
+
+		// should parse without error
+		parser.parseQuery(query, null);
+	}
+
+	@Test
+	public void testGroupByProjectionHandling_variableEffectivelyAggregationResult() {
+		String query = "SELECT (COUNT (*) AS ?count) (?count / ?count AS ?result) (?result AS ?temp) (?temp / 2 AS ?temp2) {\n"
+				+
+				"    ?s a ?o .\n" +
+				"}";
+
+		// should parse without error
+		parser.parseQuery(query, null);
+	}
+
+	@Test
+	public void testGroupByProjectionHandling_effectivelyConstant() {
+		String query = "SELECT  (2  AS ?constant1) (?constant1  AS ?constant2) (?constant2/2  AS ?constant3){\n" +
+				"    ?o ?p ?o .\n" +
+				"} GROUP BY ?o";
+
+		// should parse without error
+		parser.parseQuery(query, null);
+	}
+
+	@Test
+	public void testGroupByProjectionHandling_renameVariable() {
+		String query = "SELECT ?o (?o  AS ?o2) (?o2  AS ?o3) (?o3/2  AS ?o4){\n" +
+				"    ?o ?p ?o .\n" +
+				"} GROUP BY ?o";
+
+		// should parse without error
+		parser.parseQuery(query, null);
+	}
+
+	@Test
+	public void testGroupByProjectionHandling_renameVariableWithAggregation() {
+		String query = "SELECT ?o (?o  AS ?o2) (COUNT (*) AS ?count) (?o2/?count  AS ?newCount){\n" +
+				"    ?o ?p ?o .\n" +
+				"} GROUP BY ?o";
+
+		// should parse without error
+		parser.parseQuery(query, null);
+	}
+
+	@Test
+	public void testDefaultPrefixes() {
+		String queryTuple = "SELECT ?s {?s ex:aaa ex:ooo}";
+
+		Set<Namespace> defaultPrefixes = new HashSet<>();
+		defaultPrefixes.add(new SimpleNamespace("ex", "http://example.org/"));
+		SPARQLParser parser = new SPARQLParser(defaultPrefixes);
+
+		parser.parseQuery(queryTuple, null);
+	}
+
+	@Test
+	public void testDefaultPrefixesOverride() {
+		final String namespaceEx1 = "http://example1.org/";
+		final String namespaceEx2 = "http://example2.org/";
+
+		assertNotEquals(namespaceEx1, namespaceEx2);
+
+		String query = "PREFIX ex: <" + namespaceEx1 + "> CONSTRUCT {?s ex:bbb ex:ccc} WHERE {?s ex:aaa ex:ooo}";
+
+		Set<Namespace> defaultPrefixes = new HashSet<>();
+		defaultPrefixes.add(new SimpleNamespace("ex", namespaceEx2));
+		SPARQLParser parser = new SPARQLParser(defaultPrefixes);
+
+		ParsedQuery parsedQuery = parser.parseQuery(query, null);
+		assertInstanceOf(ParsedGraphQuery.class, parsedQuery);
+
+		ParsedGraphQuery parsedGraphQuery = (ParsedGraphQuery) parsedQuery;
+
+		assertEquals(namespaceEx1, parsedGraphQuery.getQueryNamespaces().get("ex"));
+	}
+
+	@Test
+	public void testDefaultPrefixesNoOverride() {
+		final String namespaceEx1 = "http://example1.org/";
+
+		String query = "CONSTRUCT {?s ex:bbb ex:ccc} WHERE {?s ex:aaa ex:ooo}";
+
+		Set<Namespace> defaultPrefixes = new HashSet<>();
+		defaultPrefixes.add(new SimpleNamespace("ex", namespaceEx1));
+		SPARQLParser parser = new SPARQLParser(defaultPrefixes);
+
+		ParsedQuery parsedQuery = parser.parseQuery(query, null);
+		assertInstanceOf(ParsedGraphQuery.class, parsedQuery);
+
+		ParsedGraphQuery parsedGraphQuery = (ParsedGraphQuery) parsedQuery;
+
+		assertEquals(namespaceEx1, parsedGraphQuery.getQueryNamespaces().get("ex"));
+	}
+
+	@Test
+	public void testNoDefaultPrefixes() {
+		assertThrows(MalformedQueryException.class, () -> {
+			String query = "SELECT ?s {?s ex:aaa ex:ooo}";
+
+			HashSet<Namespace> customPrefixes = new HashSet<>();
+			SPARQLParser parser = new SPARQLParser(customPrefixes);
+
+			parser.parseQuery(query, null);
+		});
+	}
+
+	@Test
+	public void testDefaultPrefixesInsertDataOverride() throws IOException {
+		final String namespaceEx1 = "http://example1.org/";
+		final String namespaceEx2 = "http://example2.org/";
+		String query = "PREFIX ex: <" + namespaceEx2 + "> INSERT DATA { ex:A ex:P ex:B . }";
+
+		Set<Namespace> defaultPrefixes = new HashSet<>();
+		defaultPrefixes.add(new SimpleNamespace("ex", namespaceEx1));
+		SPARQLParser parser = new SPARQLParser(defaultPrefixes);
+
+		ParsedUpdate parsedUpdate = parser.parseUpdate(query, null);
+		assertEquals(1, parsedUpdate.getUpdateExprs().size());
+		UpdateExpr expr = parsedUpdate.getUpdateExprs().get(0);
+
+		assertInstanceOf(InsertData.class, expr);
+		Model parse = Rio.parse(new StringReader(((InsertData) expr).getDataBlock()), RDFFormat.TURTLE);
+		Iterable<Statement> iterable = parse.getStatements(null, null, null);
+		Iterator<Statement> it = iterable.iterator();
+		assertTrue(it.hasNext());
+		Statement line = it.next();
+		assertFalse(it.hasNext());
+		assertEquals(namespaceEx2 + "A", line.getSubject().stringValue());
+		assertEquals(namespaceEx2 + "P", line.getPredicate().stringValue());
+		assertEquals(namespaceEx2 + "B", line.getObject().stringValue());
+	}
+
+	@Test
+	public void testDefaultPrefixesInsertDataInsideOverride() throws IOException {
+		final String namespaceEx1 = "http://example1.org/";
+		final String namespaceEx2 = "http://example2.org/";
+		String query = "INSERT DATA { PREFIX ex: <" + namespaceEx2 + "> ex:A ex:P ex:B . }";
+
+		Set<Namespace> defaultPrefixes = new HashSet<>();
+		defaultPrefixes.add(Values.namespace("ex", namespaceEx1));
+		SPARQLParser parser = new SPARQLParser(defaultPrefixes);
+
+		ParsedUpdate parsedUpdate = parser.parseUpdate(query, null);
+		assertEquals(1, parsedUpdate.getUpdateExprs().size());
+		UpdateExpr expr = parsedUpdate.getUpdateExprs().get(0);
+
+		assertInstanceOf(InsertData.class, expr);
+		Model parse = Rio.parse(new StringReader(((InsertData) expr).getDataBlock()), RDFFormat.TURTLE);
+		Iterable<Statement> iterable = parse.getStatements(null, null, null);
+		Iterator<Statement> it = iterable.iterator();
+		assertTrue(it.hasNext());
+		Statement line = it.next();
+		assertFalse(it.hasNext());
+		assertEquals(namespaceEx2 + "A", line.getSubject().stringValue());
+		assertEquals(namespaceEx2 + "P", line.getPredicate().stringValue());
+		assertEquals(namespaceEx2 + "B", line.getObject().stringValue());
+	}
+
+	@Test
+	public void testDefaultPrefixesInsertDataNoOverride() throws IOException {
+		final String namespaceEx1 = "http://example1.org/";
+		String query = "INSERT DATA { ex:A ex:P ex:B . }";
+
+		Set<Namespace> defaultPrefixes = new HashSet<>();
+		defaultPrefixes.add(Values.namespace("ex", namespaceEx1));
+		SPARQLParser parser = new SPARQLParser(defaultPrefixes);
+
+		ParsedUpdate parsedUpdate = parser.parseUpdate(query, null);
+		assertEquals(1, parsedUpdate.getUpdateExprs().size());
+		UpdateExpr expr = parsedUpdate.getUpdateExprs().get(0);
+
+		assertInstanceOf(InsertData.class, expr);
+		Model parse = Rio.parse(new StringReader(((InsertData) expr).getDataBlock()), RDFFormat.TURTLE);
+		Iterable<Statement> iterable = parse.getStatements(null, null, null);
+		Iterator<Statement> it = iterable.iterator();
+		assertTrue(it.hasNext());
+		Statement line = it.next();
+		assertFalse(it.hasNext());
+		assertEquals(namespaceEx1 + "A", line.getSubject().stringValue());
+		assertEquals(namespaceEx1 + "P", line.getPredicate().stringValue());
+		assertEquals(namespaceEx1 + "B", line.getObject().stringValue());
+	}
+
+	@Test
+	public void testDefaultPrefixesDeleteDataOverride() throws IOException {
+		final String namespaceEx1 = "http://example1.org/";
+		final String namespaceEx2 = "http://example2.org/";
+		String query = "PREFIX ex: <" + namespaceEx2 + "> DELETE DATA { ex:A ex:P ex:B . }";
+
+		Set<Namespace> defaultPrefixes = new HashSet<>();
+		defaultPrefixes.add(Values.namespace("ex", namespaceEx1));
+		SPARQLParser parser = new SPARQLParser(defaultPrefixes);
+
+		ParsedUpdate parsedUpdate = parser.parseUpdate(query, null);
+		assertEquals(1, parsedUpdate.getUpdateExprs().size());
+		UpdateExpr expr = parsedUpdate.getUpdateExprs().get(0);
+
+		assertInstanceOf(DeleteData.class, expr);
+		Model parse = Rio.parse(new StringReader(((DeleteData) expr).getDataBlock()), RDFFormat.TURTLE);
+		Iterable<Statement> iterable = parse.getStatements(null, null, null);
+		Iterator<Statement> it = iterable.iterator();
+		assertTrue(it.hasNext());
+		Statement line = it.next();
+		assertFalse(it.hasNext());
+		assertEquals(namespaceEx2 + "A", line.getSubject().stringValue());
+		assertEquals(namespaceEx2 + "P", line.getPredicate().stringValue());
+		assertEquals(namespaceEx2 + "B", line.getObject().stringValue());
+	}
+
+	@Test
+	public void testDefaultPrefixesDeleteDataInsideOverride() throws IOException {
+		final String namespaceEx1 = "http://example1.org/";
+		final String namespaceEx2 = "http://example2.org/";
+		String query = "DELETE DATA { PREFIX ex: <" + namespaceEx2 + "> ex:A ex:P ex:B . }";
+
+		Set<Namespace> defaultPrefixes = new HashSet<>();
+		defaultPrefixes.add(Values.namespace("ex", namespaceEx1));
+		SPARQLParser parser = new SPARQLParser(defaultPrefixes);
+
+		ParsedUpdate parsedUpdate = parser.parseUpdate(query, null);
+		assertEquals(1, parsedUpdate.getUpdateExprs().size());
+		UpdateExpr expr = parsedUpdate.getUpdateExprs().get(0);
+
+		assertInstanceOf(DeleteData.class, expr);
+		Model parse = Rio.parse(new StringReader(((DeleteData) expr).getDataBlock()), RDFFormat.TURTLE);
+		Iterable<Statement> iterable = parse.getStatements(null, null, null);
+		Iterator<Statement> it = iterable.iterator();
+		assertTrue(it.hasNext());
+		Statement line = it.next();
+		assertFalse(it.hasNext());
+		assertEquals(namespaceEx2 + "A", line.getSubject().stringValue());
+		assertEquals(namespaceEx2 + "P", line.getPredicate().stringValue());
+		assertEquals(namespaceEx2 + "B", line.getObject().stringValue());
+	}
+
+	@Test
+	public void testDefaultPrefixesDeleteDataNoOverride() throws IOException {
+		final String namespaceEx1 = "http://example1.org/";
+		String query = "DELETE DATA { ex:A ex:P ex:B . }";
+
+		Set<Namespace> defaultPrefixes = new HashSet<>();
+		defaultPrefixes.add(Values.namespace("ex", namespaceEx1));
+		SPARQLParser parser = new SPARQLParser(defaultPrefixes);
+
+		ParsedUpdate parsedUpdate = parser.parseUpdate(query, null);
+		assertEquals(1, parsedUpdate.getUpdateExprs().size());
+		UpdateExpr expr = parsedUpdate.getUpdateExprs().get(0);
+
+		assertInstanceOf(DeleteData.class, expr);
+		Model parse = Rio.parse(new StringReader(((DeleteData) expr).getDataBlock()), RDFFormat.TURTLE);
+		Iterable<Statement> iterable = parse.getStatements(null, null, null);
+		Iterator<Statement> it = iterable.iterator();
+		assertTrue(it.hasNext());
+		Statement line = it.next();
+		assertFalse(it.hasNext());
+		assertEquals(namespaceEx1 + "A", line.getSubject().stringValue());
+		assertEquals(namespaceEx1 + "P", line.getPredicate().stringValue());
+		assertEquals(namespaceEx1 + "B", line.getObject().stringValue());
+	}
+
+	@Test
+	public void testGroupByProjectionHandling_function() {
+		String query = "select (strlen(concat(strlen(?s)+2, \"abc\", count(?o))) as ?len) where { \n" +
+				"?s ?p ?o .\n" +
+				"} group by ?s";
+
+		// should parse without error
+		parser.parseQuery(query, null);
+	}
+
+	private AggregateFunctionFactory buildDummyFactory() {
+		return new AggregateFunctionFactory() {
+			@Override
+			public String getIri() {
+				return "https://www.rdf4j.org/aggregate#x";
+			}
+
+			@Override
+			public AggregateFunction buildFunction(Function<BindingSet, Value> evaluationStep) {
+				return null;
+			}
+
+			@Override
+			public AggregateCollector getCollector() {
+				return null;
+			}
+		};
 	}
 }

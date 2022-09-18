@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.http.server.repository.config;
 
@@ -12,7 +15,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.apache.commons.codec.Charsets;
+import java.nio.charset.StandardCharsets;
+
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.repository.config.RepositoryConfig;
 import org.eclipse.rdf4j.repository.config.RepositoryConfigSchema;
@@ -72,7 +76,7 @@ public class ConfigControllerTest {
 		request.setContentType(RDFFormat.NTRIPLES.getDefaultMIMEType());
 		request.setContent(
 				("_:node1 <" + RepositoryConfigSchema.REPOSITORYID + "> \"" + repositoryId + "\" .")
-						.getBytes(Charsets.UTF_8));
+						.getBytes(StandardCharsets.UTF_8));
 
 		when(manager.hasRepositoryConfig(repositoryId)).thenReturn(true);
 

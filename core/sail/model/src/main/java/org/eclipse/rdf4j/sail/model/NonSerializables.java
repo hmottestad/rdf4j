@@ -1,15 +1,19 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.model;
 
 import java.util.Map;
 import java.util.UUID;
 
+import org.eclipse.rdf4j.common.annotation.InternalUseOnly;
 import org.eclipse.rdf4j.util.UUIDable;
 
 import com.google.common.cache.Cache;
@@ -20,9 +24,10 @@ import com.google.common.cache.CacheBuilder;
  * entries to be garbage-collected when no longer used.
  *
  * @author Mark
- * @deprecated this feature is for internal use only: its existence, signature or behavior may change without warning
- *             from one release to the next.
+ * @apiNote this feature is for internal use only: its existence, signature or behavior may change without warning from
+ *          one release to the next.
  */
+@InternalUseOnly
 public class NonSerializables {
 
 	private static final Cache<UUID, Object> registry = CacheBuilder.newBuilder().weakValues().build();
@@ -33,7 +38,7 @@ public class NonSerializables {
 	 * @param key the key.
 	 * @return the registered object, or <code>null</code> if no matching EvaluationStrategy can be found.
 	 */
-	public static final Object get(UUID key) {
+	public static Object get(UUID key) {
 		return registry.getIfPresent(key);
 	}
 
@@ -44,8 +49,8 @@ public class NonSerializables {
 	 * @return the registry key with which the supplied object can be retrieved, or <code>null</code> if the supplied
 	 *         object is not in the registry.
 	 */
-	public static final UUID getKey(Object obj) {
-		final Map<UUID, Object> map = registry.asMap();
+	public static UUID getKey(Object obj) {
+		Map<UUID, Object> map = registry.asMap();
 
 		// we could make this lookup more efficient with a WeakHashMap-based
 		// reverse index, but we currently prefer this slower but more robust
@@ -68,7 +73,7 @@ public class NonSerializables {
 	 * @param obj the object to register
 	 * @return the key with which the object is registered.
 	 */
-	public static final UUID register(Object obj) {
+	public static UUID register(Object obj) {
 		UUID key;
 		if (obj instanceof UUIDable) {
 			key = ((UUIDable) obj).getUUID();

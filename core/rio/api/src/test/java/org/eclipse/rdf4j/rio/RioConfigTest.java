@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2018 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.rio;
 
@@ -19,9 +22,9 @@ public class RioConfigTest {
 
 	private RioConfig config;
 
-	private String key = "org.eclipse.rdf4j.rio.rioconfig.test";
+	private final String key = "org.eclipse.rdf4j.rio.rioconfig.test";
 
-	private BooleanRioSetting testSetting = new BooleanRioSetting(key, "test setting", true);
+	private final BooleanRioSetting testSetting = new BooleanRioSetting(key, "test setting", true);
 
 	@Before
 	public void setUp() throws Exception {
@@ -85,7 +88,7 @@ public class RioConfigTest {
 	@Test
 	public void testGetWithUnsupportedConversionType() throws Exception {
 		// we deliberately do not use StringRioSetting as that supports conversion of system property values
-		AbstractRioSetting<String> nonConvertableSetting = new AbstractRioSetting<String>(key, "test setting",
+		AbstractRioSetting<String> nonConvertableSetting = new AbstractRioSetting<>(key, "test setting",
 				"default value") {
 			private static final long serialVersionUID = 1L;
 		};

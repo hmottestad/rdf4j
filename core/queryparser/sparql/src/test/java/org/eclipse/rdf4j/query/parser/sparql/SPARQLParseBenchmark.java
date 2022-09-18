@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 
 package org.eclipse.rdf4j.query.parser.sparql;
@@ -28,11 +31,11 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 @State(Scope.Benchmark)
-@Warmup(iterations = 10)
+@Warmup(iterations = 5)
 @BenchmarkMode({ Mode.AverageTime })
-//@Fork(value = 1, jvmArgs = {"-Xms4G", "-Xmx4G", "-Xmn2G", "-XX:+UseSerialGC", "-XX:+UnlockCommercialFeatures", "-XX:StartFlightRecording=delay=5s,duration=60s,filename=recording.jfr,settings=profile", "-XX:FlightRecorderOptions=samplethreads=true,stackdepth=1024", "-XX:+UnlockDiagnosticVMOptions", "-XX:+DebugNonSafepoints"})
-@Fork(value = 1, jvmArgs = { "-Xms4G", "-Xmx4G", "-Xmn2G", "-XX:+UseSerialGC" })
-@Measurement(iterations = 40)
+//@Fork(value = 1, jvmArgs = {"-Xms4G", "-Xmx4G", "-XX:StartFlightRecording=delay=5s,duration=60s,filename=recording.jfr,settings=profile", "-XX:FlightRecorderOptions=samplethreads=true,stackdepth=1024", "-XX:+UnlockDiagnosticVMOptions", "-XX:+DebugNonSafepoints"})
+@Fork(value = 1, jvmArgs = { "-Xms4G", "-Xmx4G" })
+@Measurement(iterations = 5)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 public class SPARQLParseBenchmark {
 
@@ -43,11 +46,6 @@ public class SPARQLParseBenchmark {
 				.build();
 
 		new Runner(opt).run();
-	}
-
-	@Setup(Level.Iteration)
-	public void setUp() {
-		System.gc();
 	}
 
 	@Benchmark

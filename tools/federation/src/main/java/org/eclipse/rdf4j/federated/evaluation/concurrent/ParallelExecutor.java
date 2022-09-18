@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.federated.evaluation.concurrent;
 
@@ -31,31 +34,31 @@ public interface ParallelExecutor<T> extends Runnable {
 	 *
 	 * @param res
 	 */
-	public void addResult(CloseableIteration<T, QueryEvaluationException> res);
+	void addResult(CloseableIteration<T, QueryEvaluationException> res);
 
 	/**
 	 * Toss some exception to the controlling instance
 	 *
 	 * @param e
 	 */
-	public void toss(Exception e);
+	void toss(Exception e);
 
 	/**
 	 * Inform the controlling instance that some job is done from a different thread. In most cases this is a no-op.
 	 */
-	public void done();
+	void done();
 
 	/**
 	 * Return true if this executor is finished or aborted
 	 *
 	 * @return whether the execution is finished
 	 */
-	public boolean isFinished();
+	boolean isFinished();
 
 	/**
 	 * Return the query info of the associated query
 	 *
 	 * @return the query info
 	 */
-	public QueryInfo getQueryInfo();
+	QueryInfo getQueryInfo();
 }

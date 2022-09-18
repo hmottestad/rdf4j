@@ -1,13 +1,19 @@
+/*******************************************************************************
+ * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Distribution License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *******************************************************************************/
 package org.eclipse.rdf4j.sail.nativerdf;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import org.apache.commons.io.FileUtils;
-import org.assertj.core.util.Files;
-import org.eclipse.rdf4j.IsolationLevels;
+import org.eclipse.rdf4j.common.transaction.IsolationLevels;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
@@ -16,31 +22,17 @@ import org.eclipse.rdf4j.sail.NotifyingSail;
 import org.eclipse.rdf4j.sail.NotifyingSailConnection;
 import org.eclipse.rdf4j.sail.SailConflictException;
 import org.eclipse.rdf4j.sail.SailConnection;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class LongMultithreadedTransactions {
-
-	File file;
-
-	@After
-	public void after() {
-		try {
-			FileUtils.deleteDirectory(file);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	@Before
-	public void before() {
-		file = Files.newTemporaryFolder();
-	}
+	@Rule
+	public final TemporaryFolder tmpDir = new TemporaryFolder();
 
 	NotifyingSail getBaseSail() {
-		return new NativeStore(file);
+		return new NativeStore(tmpDir.getRoot());
 	}
 
 	@Test
@@ -51,22 +43,22 @@ public class LongMultithreadedTransactions {
 
 		NotifyingSail baseSail = getBaseSail();
 
-		Random r = new Random();
+		Random random = new Random(6424235);
 
 		IntStream.range(0, 10000).parallel().forEach(i -> {
 
 			try (SailConnection connection = baseSail.getConnection()) {
 
-				executeATransaction(vf, r, i, connection);
-				executeATransaction(vf, r, i, connection);
-				executeATransaction(vf, r, i, connection);
-				executeATransaction(vf, r, i, connection);
-				executeATransaction(vf, r, i, connection);
-				executeATransaction(vf, r, i, connection);
-				executeATransaction(vf, r, i, connection);
-				executeATransaction(vf, r, i, connection);
-				executeATransaction(vf, r, i, connection);
-				executeATransaction(vf, r, i, connection);
+				executeATransaction(vf, random, i, connection);
+				executeATransaction(vf, random, i, connection);
+				executeATransaction(vf, random, i, connection);
+				executeATransaction(vf, random, i, connection);
+				executeATransaction(vf, random, i, connection);
+				executeATransaction(vf, random, i, connection);
+				executeATransaction(vf, random, i, connection);
+				executeATransaction(vf, random, i, connection);
+				executeATransaction(vf, random, i, connection);
+				executeATransaction(vf, random, i, connection);
 
 			}
 
@@ -81,8 +73,6 @@ public class LongMultithreadedTransactions {
 		ValueFactory vf = SimpleValueFactory.getInstance();
 
 		NotifyingSail baseSail = getBaseSail();
-
-		Random r = new Random();
 
 		try (NotifyingSailConnection connection0 = baseSail.getConnection()) {
 			try (NotifyingSailConnection connection1 = baseSail.getConnection()) {

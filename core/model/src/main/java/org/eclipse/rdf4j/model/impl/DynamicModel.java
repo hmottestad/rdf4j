@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 
 package org.eclipse.rdf4j.model.impl;
@@ -19,6 +22,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.eclipse.rdf4j.common.iterator.EmptyIterator;
+import org.eclipse.rdf4j.common.iterator.SingletonIterator;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
@@ -26,8 +31,6 @@ import org.eclipse.rdf4j.model.Namespace;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.util.iterators.EmptyIterator;
-import org.eclipse.rdf4j.util.iterators.SingletonIterator;
 
 /**
  * A LinkedHashModel or a TreeModel achieves fast data access at the cost of higher indexing time. The DynamicModel

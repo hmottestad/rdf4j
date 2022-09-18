@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 
 package org.eclipse.rdf4j.sail.elasticsearchstore.benchmark;
@@ -15,7 +18,8 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import org.assertj.core.util.Files;
-import org.eclipse.rdf4j.IsolationLevels;
+import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
+import org.eclipse.rdf4j.common.transaction.IsolationLevels;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
@@ -36,8 +40,6 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 
-import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
-
 /**
  * @author Håvard Ottestad
  */
@@ -49,9 +51,8 @@ import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
 @Measurement(iterations = 10)
 public class TransactionBenchmark {
 
-	private static EmbeddedElastic embeddedElastic;
-
-	private static File installLocation = Files.newTemporaryFolder();
+	private static final File installLocation = Files.newTemporaryFolder();
+	private static ElasticsearchClusterRunner runner;
 
 	private SailRepository repository;
 
@@ -62,11 +63,10 @@ public class TransactionBenchmark {
 		// JMH does not correctly set JAVA_HOME. Change the JAVA_HOME below if you the following error:
 		// [EmbeddedElsHandler] INFO p.a.t.e.ElasticServer - could not find java; set JAVA_HOME or ensure java is in
 		// PATH
-		embeddedElastic = TestHelpers.startElasticsearch(installLocation,
-				"/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home");
+		runner = TestHelpers.startElasticsearch(installLocation);
 
 		repository = new SailRepository(
-				new ElasticsearchStore("localhost", embeddedElastic.getTransportTcpPort(), "cluster1", "testindex",
+				new ElasticsearchStore("localhost", TestHelpers.getPort(runner), TestHelpers.CLUSTER, "testindex",
 						false));
 		try (SailRepositoryConnection connection = repository.getConnection()) {
 			connection.begin(IsolationLevels.NONE);
@@ -75,7 +75,6 @@ public class TransactionBenchmark {
 		}
 
 		System.gc();
-
 	}
 
 	private static InputStream getResourceAsStream(String name) {
@@ -84,10 +83,8 @@ public class TransactionBenchmark {
 
 	@TearDown(Level.Trial)
 	public void afterClass() {
-
 		repository.shutDown();
-		TestHelpers.stopElasticsearch(embeddedElastic, installLocation);
-
+		TestHelpers.stopElasticsearch(runner);
 	}
 
 	@Benchmark

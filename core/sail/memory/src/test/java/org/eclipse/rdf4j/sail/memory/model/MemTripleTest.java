@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.memory.model;
 
@@ -13,8 +16,8 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Triple;
 import org.eclipse.rdf4j.model.impl.SimpleTriple;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for the memory-specific implementation of the {@link Triple} interface.
@@ -29,7 +32,7 @@ public class MemTripleTest {
 
 	private IRI s1, p1, o1;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 
 		SimpleValueFactory svf = SimpleValueFactory.getInstance();

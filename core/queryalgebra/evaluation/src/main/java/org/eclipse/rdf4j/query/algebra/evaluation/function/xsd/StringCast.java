@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.algebra.evaluation.function.xsd;
 
@@ -15,11 +18,11 @@ import org.eclipse.rdf4j.model.datatypes.XMLDatatypeUtil;
 import org.eclipse.rdf4j.model.util.Literals;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.eclipse.rdf4j.query.algebra.evaluation.ValueExprEvaluationException;
-import org.eclipse.rdf4j.query.algebra.evaluation.util.QueryEvaluationUtil;
+import org.eclipse.rdf4j.query.algebra.evaluation.util.QueryEvaluationUtility;
 
 /**
  * A {@link org.eclipse.rdf4j.query.algebra.evaluation.function.Function} that tries to cast its argument to an
- * <tt>xsd:string</tt>.
+ * <var>xsd:string</var>.
  *
  * @author Arjohn Kampman
  * @author Jeen Broekstra
@@ -39,7 +42,7 @@ public class StringCast extends CastFunction {
 
 			// we override because unlike most other cast functions, xsd:string should not accept a language-tagged
 			// string literal.
-			if (QueryEvaluationUtil.isSimpleLiteral(literal)) {
+			if (QueryEvaluationUtility.isSimpleLiteral(literal)) {
 				String lexicalValue = XMLDatatypeUtil.collapseWhiteSpace(literal.getLabel());
 				if (isValidForDatatype(lexicalValue)) {
 					return valueFactory.createLiteral(lexicalValue, getXsdDatatype());
@@ -63,7 +66,7 @@ public class StringCast extends CastFunction {
 			Literal literal = (Literal) value;
 			IRI datatype = literal.getDatatype();
 
-			if (QueryEvaluationUtil.isSimpleLiteral(literal)) {
+			if (QueryEvaluationUtility.isSimpleLiteral(literal)) {
 				return valueFactory.createLiteral(literal.getLabel(), XSD.STRING);
 			} else if (!Literals.isLanguageLiteral(literal)) {
 				if (XMLDatatypeUtil.isNumericDatatype(datatype) || datatype.equals(XSD.BOOLEAN)

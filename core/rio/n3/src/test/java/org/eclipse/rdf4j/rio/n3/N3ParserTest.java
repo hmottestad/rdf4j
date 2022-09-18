@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.rio.n3;
 
@@ -29,7 +32,7 @@ public class N3ParserTest {
 
 	private N3Parser parser;
 
-	private ValueFactory vf = SimpleValueFactory.getInstance();
+	private final ValueFactory vf = SimpleValueFactory.getInstance();
 
 	private final ParseErrorCollector errorCollector = new ParseErrorCollector();
 
@@ -39,11 +42,8 @@ public class N3ParserTest {
 
 	private final String baseURI = "http://example.org/";
 
-	private SimpleParseLocationListener locationListener = new SimpleParseLocationListener();
+	private final SimpleParseLocationListener locationListener = new SimpleParseLocationListener();
 
-	/**
-	 * @throws java.lang.Exception
-	 */
 	@Before
 	public void setUp() {
 		parser = new N3Parser();

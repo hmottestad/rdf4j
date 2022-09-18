@@ -1,9 +1,12 @@
 /*******************************************************************************
- Copyright (c) 2018 Eclipse RDF4J contributors.
- All rights reserved. This program and the accompanying materials
- are made available under the terms of the Eclipse Distribution License v1.0
- which accompanies this distribution, and is available at
- http://www.eclipse.org/org/documents/edl-v10.php.
+ * Copyright (c) 2018 Eclipse RDF4J contributors.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Distribution License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 
 package org.eclipse.rdf4j.sparqlbuilder.constraint;
@@ -15,11 +18,21 @@ import static org.eclipse.rdf4j.sparqlbuilder.constraint.SparqlFunction.CEIL;
 import static org.eclipse.rdf4j.sparqlbuilder.constraint.SparqlFunction.COALESCE;
 import static org.eclipse.rdf4j.sparqlbuilder.constraint.SparqlFunction.CONCAT;
 import static org.eclipse.rdf4j.sparqlbuilder.constraint.SparqlFunction.REGEX;
+import static org.eclipse.rdf4j.sparqlbuilder.rdf.Rdf.iri;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.sparqlbuilder.constraint.propertypath.*;
+import org.eclipse.rdf4j.sparqlbuilder.constraint.propertypath.builder.EmptyPropertyPathBuilder;
+import org.eclipse.rdf4j.sparqlbuilder.constraint.propertypath.builder.PropertyPathBuilder;
+import org.eclipse.rdf4j.sparqlbuilder.core.Assignable;
 import org.eclipse.rdf4j.sparqlbuilder.core.Variable;
 import org.eclipse.rdf4j.sparqlbuilder.rdf.Iri;
 import org.eclipse.rdf4j.sparqlbuilder.rdf.Rdf;
 import org.eclipse.rdf4j.sparqlbuilder.rdf.RdfLiteral;
+import org.eclipse.rdf4j.sparqlbuilder.rdf.RdfValue;
 
 /**
  * A class with static methods to create SPARQL expressions. Obviously there's some more flushing out TODO still
@@ -208,9 +221,13 @@ public class Expressions {
 		return new CustomFunction(functionIri).addOperand(operands);
 	}
 
+	public static Expression<?> custom(IRI functionIri, Operand... operands) {
+		return new CustomFunction(functionIri).addOperand(operands);
+	}
+
 	/**
 	 * {@code operand IN (expression1, expression2...)}
-	 * 
+	 *
 	 * @param searchTerm
 	 * @param expressions
 	 * @return an {@code IN} function
@@ -223,7 +240,7 @@ public class Expressions {
 
 	/**
 	 * {@code operand NOT IN (expression1, expression2...)}
-	 * 
+	 *
 	 * @param searchTerm
 	 * @param expressions
 	 * @return an {@code NOT IN} function
@@ -309,6 +326,14 @@ public class Expressions {
 	 */
 	public static Expression<?> notEquals(Operand left, Operand right) {
 		return binaryExpression(BinaryOperator.NOT_EQUALS, left, right);
+	}
+
+	public static Expression<?> notEquals(Variable left, RdfValue right) {
+		return binaryExpression(BinaryOperator.NOT_EQUALS, left, right);
+	}
+
+	public static Expression<?> notEquals(Variable left, IRI right) {
+		return binaryExpression(BinaryOperator.NOT_EQUALS, left, iri(right));
 	}
 
 	/**
@@ -576,5 +601,59 @@ public class Expressions {
 
 	public static Aggregate sum(Operand operand) {
 		return new Aggregate(SparqlAggregate.SUM).addOperand(operand);
+	}
+
+	public static Bind bind(Assignable exp, Variable var) {
+		return new Bind(exp, var);
+	}
+
+	public static Expression<?> notIn(Variable var, RdfValue... options) {
+		return new NotIn(var, options);
+	}
+
+	public static Expression<?> notIn(Variable var, IRI... options) {
+		return notIn(var, parseIRIOptionsToRDFValueVarargs(options));
+	}
+
+	public static Expression<?> in(Variable var, RdfValue... options) {
+		return new In(var, options);
+	}
+
+	public static Expression<?> in(Variable var, IRI... options) {
+		return in(var, parseIRIOptionsToRDFValueVarargs(options));
+	}
+
+	public static Expression<?> strdt(Operand lexicalForm, Operand datatype) {
+		return function(SparqlFunction.STRDT, lexicalForm, datatype);
+	}
+
+	public static Expression<?> strlen(Operand operand) {
+		return function(SparqlFunction.STRLEN, operand);
+	}
+
+	public static Expression<?> isBlank(Variable var) {
+		return function(SparqlFunction.IS_BLANK, var);
+	}
+
+	public static Expression<?> datatype(Variable var) {
+		return function(SparqlFunction.DATATYPE, var);
+	}
+
+	public static Expression<?> iff(Operand testExp, Operand thenExp, Operand elseExp) {
+		return function(SparqlFunction.IF, testExp, thenExp, elseExp);
+	}
+
+	/**
+	 * Parses IRI... options to RdfValue... options to give more flexibility in expressions use
+	 *
+	 * @param options options as IRIs
+	 * @return options as RDFValues
+	 */
+	private static RdfValue[] parseIRIOptionsToRDFValueVarargs(IRI... options) {
+		List<RdfValue> rdfValueOptions = new ArrayList<>();
+		for (IRI option : options) {
+			rdfValueOptions.add(iri(option));
+		}
+		return rdfValueOptions.toArray(new RdfValue[0]);
 	}
 }

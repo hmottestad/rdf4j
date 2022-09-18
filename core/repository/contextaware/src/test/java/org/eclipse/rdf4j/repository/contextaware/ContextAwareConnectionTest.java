@@ -1,13 +1,15 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.repository.contextaware;
 
-import static org.eclipse.rdf4j.query.QueryLanguage.SERQL;
 import static org.eclipse.rdf4j.query.QueryLanguage.SPARQL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -136,7 +138,6 @@ public class ContextAwareConnectionTest {
 		Repository repo = stub.getRepository();
 		ContextAwareConnection con = new ContextAwareConnection(repo, stub);
 		con.setReadContexts(context);
-		con.setQueryLanguage(SERQL);
 		con.prepareGraphQuery(SPARQL, queryString, null);
 	}
 
@@ -163,7 +164,6 @@ public class ContextAwareConnectionTest {
 		Repository repo = stub.getRepository();
 		ContextAwareConnection con = new ContextAwareConnection(repo, stub);
 		con.setReadContexts(context);
-		con.setQueryLanguage(SERQL);
 		con.prepareQuery(SPARQL, queryString, null);
 	}
 
@@ -190,7 +190,6 @@ public class ContextAwareConnectionTest {
 		Repository repo = stub.getRepository();
 		ContextAwareConnection con = new ContextAwareConnection(repo, stub);
 		con.setReadContexts(context);
-		con.setQueryLanguage(SERQL);
 		con.prepareTupleQuery(SPARQL, queryString, null);
 	}
 
@@ -222,9 +221,9 @@ public class ContextAwareConnectionTest {
 		Repository repo = stub.getRepository();
 		ContextAwareConnection a = new ContextAwareConnection(repo, stub);
 		ContextAwareConnection b = new ContextAwareConnection(repo, a);
-		b.setQueryLanguage(QueryLanguage.SERQL);
-		assertEquals(QueryLanguage.SERQL, b.getQueryLanguage());
-		assertEquals(QueryLanguage.SERQL, a.getQueryLanguage());
+		b.setQueryLanguage(QueryLanguage.SPARQL);
+		assertEquals(QueryLanguage.SPARQL, b.getQueryLanguage());
+		assertEquals(QueryLanguage.SPARQL, a.getQueryLanguage());
 	}
 
 	@Test

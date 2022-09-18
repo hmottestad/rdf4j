@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.spin;
 
@@ -25,7 +28,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.eclipse.rdf4j.RDF4JException;
+import org.eclipse.rdf4j.common.exception.RDF4JException;
 import org.eclipse.rdf4j.common.iteration.CloseableIteration;
 import org.eclipse.rdf4j.common.iteration.Iteration;
 import org.eclipse.rdf4j.common.iteration.Iterations;
@@ -598,19 +601,20 @@ public class SpinParser {
 		if (SP.CONSTRUCT_CLASS.equals(queryType)) {
 			SpinVisitor visitor = new SpinVisitor(store);
 			visitor.visitConstruct(queryResource);
-			return new ParsedGraphQuery(visitor.getTupleExpr());
+			TupleExpr tupleExpr = makeQueryRootIfNeeded(visitor.getTupleExpr());
+			return new ParsedGraphQuery(tupleExpr);
 		} else if (SP.SELECT_CLASS.equals(queryType)) {
 			SpinVisitor visitor = new SpinVisitor(store);
 			visitor.visitSelect(queryResource);
-			return new ParsedTupleQuery(visitor.getTupleExpr());
+			return new ParsedTupleQuery(makeQueryRootIfNeeded(visitor.getTupleExpr()));
 		} else if (SP.ASK_CLASS.equals(queryType)) {
 			SpinVisitor visitor = new SpinVisitor(store);
 			visitor.visitAsk(queryResource);
-			return new ParsedBooleanQuery(visitor.getTupleExpr());
+			return new ParsedBooleanQuery(makeQueryRootIfNeeded(visitor.getTupleExpr()));
 		} else if (SP.DESCRIBE_CLASS.equals(queryType)) {
 			SpinVisitor visitor = new SpinVisitor(store);
 			visitor.visitDescribe(queryResource);
-			return new ParsedDescribeQuery(visitor.getTupleExpr());
+			return new ParsedDescribeQuery(makeQueryRootIfNeeded(visitor.getTupleExpr()));
 		} else if (SP.MODIFY_CLASS.equals(queryType)) {
 			SpinVisitor visitor = new SpinVisitor(store);
 			visitor.visitModify(queryResource);
@@ -655,6 +659,14 @@ public class SpinParser {
 			return parsedUpdate;
 		} else {
 			throw new MalformedSpinException(String.format("Unrecognised command type: %s", queryType));
+		}
+	}
+
+	private TupleExpr makeQueryRootIfNeeded(TupleExpr tupleExpr) {
+		if (!(tupleExpr instanceof QueryRoot)) {
+			return new QueryRoot(tupleExpr);
+		} else {
+			return tupleExpr;
 		}
 	}
 
@@ -1015,9 +1027,6 @@ public class SpinParser {
 					} else {
 						valueExpr = new Var(varName);
 					}
-					if (projName == null) {
-						projName = varName;
-					}
 				} else {
 					// resource
 					if (projName == null) {
@@ -1029,14 +1038,16 @@ public class SpinParser {
 			}
 
 			ProjectionElem projElem = new ProjectionElem(varName, projName);
-			projElem.setSourceExpression(new ExtensionElem(valueExpr, varName));
+			if (!(valueExpr instanceof Var && ((Var) valueExpr).getName().equals(varName))) {
+				projElem.setSourceExpression(new ExtensionElem(valueExpr, varName));
+			}
 			if (!aggregates.isEmpty()) {
 				projElem.setAggregateOperatorInExpression(true);
 				if (group == null) {
 					group = new Group();
 				}
 				for (AggregateOperator op : aggregates) {
-					group.addGroupElement(new GroupElem(projName, op));
+					group.addGroupElement(new GroupElem(projElem.getProjectionAlias().orElse(varName), op));
 				}
 			}
 			aggregates = oldAggregates;

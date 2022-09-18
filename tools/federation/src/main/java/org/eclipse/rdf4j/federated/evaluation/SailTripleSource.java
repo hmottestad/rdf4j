@@ -1,16 +1,18 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.federated.evaluation;
 
 import org.eclipse.rdf4j.common.iteration.CloseableIteration;
 import org.eclipse.rdf4j.common.iteration.EmptyIteration;
 import org.eclipse.rdf4j.common.iteration.ExceptionConvertingIteration;
-import org.eclipse.rdf4j.common.iteration.Iterations;
 import org.eclipse.rdf4j.federated.FederationContext;
 import org.eclipse.rdf4j.federated.algebra.FilterValueExpr;
 import org.eclipse.rdf4j.federated.algebra.PrecompiledQueryNode;
@@ -46,7 +48,7 @@ import org.slf4j.LoggerFactory;
  * @author Andreas Schwarte
  *
  */
-public class SailTripleSource extends TripleSourceBase implements TripleSource {
+public class SailTripleSource extends TripleSourceBase {
 
 	private static final Logger log = LoggerFactory.getLogger(SailTripleSource.class);
 
@@ -73,24 +75,30 @@ public class SailTripleSource extends TripleSourceBase implements TripleSource {
 			RepositoryResult<Statement> repoResult = conn.getStatements((Resource) subjValue, (IRI) predValue, objValue,
 					queryInfo.getIncludeInferred(), FedXUtil.toContexts(stmt, queryInfo.getDataset()));
 
-			// XXX implementation remark and TODO taken from Sesame
-			// The same variable might have been used multiple times in this
-			// StatementPattern, verify value equality in those cases.
+			try {
+				// XXX implementation remark and TODO taken from Sesame
+				// The same variable might have been used multiple times in this
+				// StatementPattern, verify value equality in those cases.
 
-			// an iterator that converts the statements to var bindings
-			resultHolder.set(new StatementConversionIteration(repoResult, bindings, stmt));
+				// an iterator that converts the statements to var bindings
+				resultHolder.set(new StatementConversionIteration(repoResult, bindings, stmt));
 
-			// if filter is set, apply it
-			if (filterExpr != null) {
-				FilteringIteration filteredRes = new FilteringIteration(filterExpr, resultHolder.get(),
-						SailTripleSource.this.strategy);
-				if (!filteredRes.hasNext()) {
-					Iterations.closeCloseable(filteredRes);
-					resultHolder.set(new EmptyIteration<>());
-					return;
+				// if filter is set, apply it
+				if (filterExpr != null) {
+					FilteringIteration filteredRes = new FilteringIteration(filterExpr, resultHolder.get(),
+							queryInfo.getStrategy());
+					if (!filteredRes.hasNext()) {
+						filteredRes.close();
+						resultHolder.set(new EmptyIteration<>());
+						return;
+					}
+					resultHolder.set(filteredRes);
 				}
-				resultHolder.set(filteredRes);
+			} catch (Throwable t) {
+				repoResult.close();
+				throw t;
 			}
+
 		});
 	}
 
@@ -109,7 +117,7 @@ public class SailTripleSource extends TripleSourceBase implements TripleSource {
 			// The same variable might have been used multiple times in this
 			// StatementPattern, verify value equality in those cases.
 
-			resultHolder.set(new ExceptionConvertingIteration<Statement, QueryEvaluationException>(repoResult) {
+			resultHolder.set(new ExceptionConvertingIteration<>(repoResult) {
 				@Override
 				protected QueryEvaluationException convert(Exception arg0) {
 					return new QueryEvaluationException(arg0);
@@ -147,9 +155,7 @@ public class SailTripleSource extends TripleSourceBase implements TripleSource {
 		if (ds != null) {
 
 			// if FROM NAMED is used we rely on a prepared query
-			if (!ds.getNamedGraphs().isEmpty()) {
-				return true;
-			}
+			return !ds.getNamedGraphs().isEmpty();
 		}
 
 		// in all other cases: try to use the Repository API

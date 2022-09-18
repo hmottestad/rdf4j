@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.algebra.helpers;
 
@@ -18,6 +21,7 @@ import org.eclipse.rdf4j.query.algebra.StatementPattern;
  * A QueryModelVisitor that collects StatementPattern's from a query model. StatementPatterns thet are part of
  * filters/constraints are not included in the result.
  */
+@Deprecated(forRemoval = true, since = "4.1.0")
 public class StatementPatternCollector extends AbstractQueryModelVisitor<RuntimeException> {
 
 	public static List<StatementPattern> process(QueryModelNode node) {
@@ -26,7 +30,7 @@ public class StatementPatternCollector extends AbstractQueryModelVisitor<Runtime
 		return collector.getStatementPatterns();
 	}
 
-	private List<StatementPattern> stPatterns = new ArrayList<>();
+	private final List<StatementPattern> stPatterns = new ArrayList<>();
 
 	public List<StatementPattern> getStatementPatterns() {
 		return stPatterns;

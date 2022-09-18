@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.algebra.evaluation.impl;
 
@@ -53,6 +56,7 @@ import org.slf4j.LoggerFactory;
  * @author James Leigh
  * @author Arjohn Kampman
  */
+@Deprecated(forRemoval = true, since = "4.1.0")
 public class ConstantOptimizer implements QueryOptimizer {
 
 	protected static final Logger logger = LoggerFactory.getLogger(ConstantOptimizer.class);
@@ -80,7 +84,7 @@ public class ConstantOptimizer implements QueryOptimizer {
 			varsBefore.removeAll(varsAfter);
 			for (ProjectionElemList projElems : visitor.projElemLists) {
 				for (ProjectionElem projElem : projElems.getElements()) {
-					String name = projElem.getSourceName();
+					String name = projElem.getName();
 					if (varsBefore.contains(name)) {
 						UnaryTupleOperator proj = (UnaryTupleOperator) projElems.getParentNode();
 						Extension ext = new Extension(proj.getArg());

@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.repository.event;
 
@@ -17,26 +20,26 @@ import org.eclipse.rdf4j.repository.RepositoryException;
 public interface NotifyingRepository extends Repository {
 
 	/**
-	 * Registers a <tt>RepositoryListener</tt> that will receive notifications of operations that are performed on this
-	 * repository.
+	 * Registers a <var>RepositoryListener</var> that will receive notifications of operations that are performed on
+	 * this repository.
 	 */
-	public void addRepositoryListener(RepositoryListener listener);
+	void addRepositoryListener(RepositoryListener listener);
 
 	/**
-	 * Removes a registered <tt>RepositoryListener</tt> from this repository.
+	 * Removes a registered <var>RepositoryListener</var> from this repository.
 	 */
-	public void removeRepositoryListener(RepositoryListener listener);
+	void removeRepositoryListener(RepositoryListener listener);
 
 	/**
-	 * Registers a <tt>RepositoryConnectionListener</tt> that will receive notifications of operations that are
+	 * Registers a <var>RepositoryConnectionListener</var> that will receive notifications of operations that are
 	 * performed on any< connections that are created by this repository.
 	 */
-	public void addRepositoryConnectionListener(RepositoryConnectionListener listener);
+	void addRepositoryConnectionListener(RepositoryConnectionListener listener);
 
 	/**
-	 * Removes a registered <tt>RepositoryConnectionListener</tt> from this repository.
+	 * Removes a registered <var>RepositoryConnectionListener</var> from this repository.
 	 */
-	public void removeRepositoryConnectionListener(RepositoryConnectionListener listener);
+	void removeRepositoryConnectionListener(RepositoryConnectionListener listener);
 
 	/**
 	 * Opens a connection to this repository that can be used for querying and updating the contents of the repository.
@@ -60,6 +63,6 @@ public interface NotifyingRepository extends Repository {
 	 * @throws RepositoryException If something went wrong during the creation of the Connection.
 	 */
 	@Override
-	public NotifyingRepositoryConnection getConnection() throws RepositoryException;
+	NotifyingRepositoryConnection getConnection() throws RepositoryException;
 
 }

@@ -1,38 +1,39 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.console.command;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.rdf4j.federated.repository.FedXRepositoryConfig;
+import org.eclipse.rdf4j.federated.util.Vocabulary.FEDX;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.repository.config.RepositoryImplConfig;
-import org.eclipse.rdf4j.repository.http.config.HTTPRepositoryConfig;
 import org.eclipse.rdf4j.repository.http.config.HTTPRepositoryFactory;
 import org.eclipse.rdf4j.repository.manager.LocalRepositoryManager;
-import org.eclipse.rdf4j.repository.sail.config.ProxyRepositoryConfig;
 import org.eclipse.rdf4j.repository.sail.config.ProxyRepositoryFactory;
-import org.eclipse.rdf4j.repository.sail.config.SailRepositoryConfig;
-import org.eclipse.rdf4j.repository.sparql.config.SPARQLRepositoryConfig;
 import org.eclipse.rdf4j.repository.sparql.config.SPARQLRepositoryFactory;
-import org.eclipse.rdf4j.sail.federation.config.FederationConfig;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InjectMocks;
 
 /**
@@ -58,15 +59,17 @@ public class FederateTest extends AbstractCommandTest {
 
 	private static final String FED_DESCRIPTION = "Test Federation Title";
 
-	@Rule
-	public TemporaryFolder tempDir = new TemporaryFolder();
+	@TempDir
+	public File tempDir;
 
 	@InjectMocks
 	private Federate federate;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
-		manager = new LocalRepositoryManager(tempDir.newFolder("federate-test-repository-manager"));
+		File baseDir = new File(tempDir, "federate-test-repository-manager");
+		assertTrue(baseDir.mkdir());
+		manager = new LocalRepositoryManager(baseDir);
 		addRepositories("federate", MEMORY_MEMBER_ID1, MEMORY_MEMBER_ID2, HTTP_MEMBER_ID, HTTP2_MEMBER_ID,
 				SPARQL_MEMBER_ID, SPARQL2_MEMBER_ID);
 		when(mockConsoleState.getManager()).thenReturn(manager);
@@ -117,13 +120,6 @@ public class FederateTest extends AbstractCommandTest {
 	}
 
 	@Test
-	public void testSparqlAndNotReadOnlyPrintsError() throws Exception {
-		execute("readonly=false", FED_ID, SPARQL_MEMBER_ID, SPARQL2_MEMBER_ID);
-		verifyFailure(SPARQL_MEMBER_ID + " is read-only.");
-		verifyFailure(SPARQL2_MEMBER_ID + " is read-only.");
-	}
-
-	@Test
 	public void testFedAlreadyExistsPrintsSpecificError() throws Exception {
 		execute(MEMORY_MEMBER_ID1, FED_ID, MEMORY_MEMBER_ID2);
 		verifyFailure(MEMORY_MEMBER_ID1 + " already exists.");
@@ -168,14 +164,6 @@ public class FederateTest extends AbstractCommandTest {
 	}
 
 	@Test
-	public void testSuccessWithNonDefaultReadonlyAndDistinct() throws Exception {
-		execute(FED_ID, "distinct=true", "readonly=false", MEMORY_MEMBER_ID1, MEMORY_MEMBER_ID2);
-		verifySuccess(false, true, ProxyRepositoryFactory.REPOSITORY_TYPE, ProxyRepositoryFactory.REPOSITORY_TYPE);
-		long expectedSize = getSize(MEMORY_MEMBER_ID1) + getSize(MEMORY_MEMBER_ID2);
-		assertThat(getSize(FED_ID)).isEqualTo(expectedSize);
-	}
-
-	@Test
 	public void testFullyHeterogeneousSuccess() throws Exception {
 		execute(FED_ID, SPARQL_MEMBER_ID, MEMORY_MEMBER_ID1, HTTP_MEMBER_ID);
 		verifySuccess(SPARQLRepositoryFactory.REPOSITORY_TYPE, ProxyRepositoryFactory.REPOSITORY_TYPE,
@@ -183,37 +171,16 @@ public class FederateTest extends AbstractCommandTest {
 	}
 
 	private void verifySuccess(String... memberTypes) throws Exception {
-		verifySuccess(true, false, memberTypes);
-	}
-
-	private void verifySuccess(boolean readonly, boolean distinct, String... memberTypes) throws Exception {
 		assertThat(manager.hasRepositoryConfig(FED_ID)).isTrue();
 		verify(mockConsoleIO, times(1)).readln("Federation Description (optional): ");
 		verify(mockConsoleIO, times(1)).writeln("Federation created.");
 		verify(mockConsoleIO, never()).writeError(anyString());
 		assertThat(manager.getRepositoryInfo(FED_ID).getDescription()).isEqualTo(FED_DESCRIPTION);
-		SailRepositoryConfig sailRepoConfig = (SailRepositoryConfig) manager.getRepositoryConfig(FED_ID)
+		FedXRepositoryConfig fedRepoConfig = (FedXRepositoryConfig) manager.getRepositoryConfig(FED_ID)
 				.getRepositoryImplConfig();
-		FederationConfig fedSailConfig = (FederationConfig) sailRepoConfig.getSailImplConfig();
-		assertThat(fedSailConfig.isReadOnly()).isEqualTo(readonly);
-		assertThat(fedSailConfig.isDistinct()).isEqualTo(distinct);
-		List<RepositoryImplConfig> members = fedSailConfig.getMembers();
-		assertThat(members).hasSameSizeAs(memberTypes);
-		int i = 0;
-		for (RepositoryImplConfig ric : members) {
-			String memberType = memberTypes[i];
-			i++;
-			assertThat(ric.getType()).isEqualTo(memberType);
-			Class<? extends RepositoryImplConfig> implType;
-			if (HTTPRepositoryFactory.REPOSITORY_TYPE.equals(memberType)) {
-				implType = HTTPRepositoryConfig.class;
-			} else if (SPARQLRepositoryFactory.REPOSITORY_TYPE.equals(memberType)) {
-				implType = SPARQLRepositoryConfig.class;
-			} else {
-				implType = ProxyRepositoryConfig.class;
-			}
-			assertThat(ric).isInstanceOf(implType);
-		}
+
+		Model members = fedRepoConfig.getMembers();
+		assertThat(members.filter(null, FEDX.REPOSITORY_NAME, null).objects()).hasSameSizeAs(memberTypes);
 	}
 
 	private void verifyFailure(String... error) throws Exception {

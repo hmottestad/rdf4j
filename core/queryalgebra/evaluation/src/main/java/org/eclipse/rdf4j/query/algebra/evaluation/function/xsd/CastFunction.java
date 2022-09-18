@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2016 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.algebra.evaluation.function.xsd;
 
@@ -15,7 +18,7 @@ import org.eclipse.rdf4j.model.datatypes.XMLDatatypeUtil;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.eclipse.rdf4j.query.algebra.evaluation.ValueExprEvaluationException;
 import org.eclipse.rdf4j.query.algebra.evaluation.function.Function;
-import org.eclipse.rdf4j.query.algebra.evaluation.util.QueryEvaluationUtil;
+import org.eclipse.rdf4j.query.algebra.evaluation.util.QueryEvaluationUtility;
 
 /**
  * Abstract superclass for {@link org.eclipse.rdf4j.query.algebra.evaluation.function.Function}s that cast an argument
@@ -42,7 +45,7 @@ public abstract class CastFunction implements Function {
 			Literal literal = (Literal) args[0];
 			IRI datatype = literal.getDatatype();
 
-			if (QueryEvaluationUtil.isStringLiteral(literal)) {
+			if (QueryEvaluationUtility.isStringLiteral(literal)) {
 				String lexicalValue = XMLDatatypeUtil.collapseWhiteSpace(literal.getLabel());
 				if (isValidForDatatype(lexicalValue)) {
 					return valueFactory.createLiteral(lexicalValue, getXsdDatatype());

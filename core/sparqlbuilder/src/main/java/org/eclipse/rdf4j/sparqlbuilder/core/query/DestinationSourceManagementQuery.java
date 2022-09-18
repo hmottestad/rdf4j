@@ -1,15 +1,21 @@
 /*******************************************************************************
- Copyright (c) 2018 Eclipse RDF4J contributors.
- All rights reserved. This program and the accompanying materials
- are made available under the terms of the Eclipse Distribution License v1.0
- which accompanies this distribution, and is available at
- http://www.eclipse.org/org/documents/edl-v10.php.
+ * Copyright (c) 2018 Eclipse RDF4J contributors.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Distribution License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 
 package org.eclipse.rdf4j.sparqlbuilder.core.query;
 
+import static org.eclipse.rdf4j.sparqlbuilder.rdf.Rdf.iri;
+
 import java.util.Optional;
 
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.sparqlbuilder.rdf.Iri;
 
 /**
@@ -19,8 +25,8 @@ import org.eclipse.rdf4j.sparqlbuilder.rdf.Iri;
  */
 public abstract class DestinationSourceManagementQuery<T extends DestinationSourceManagementQuery<T>>
 		extends GraphManagementQuery<DestinationSourceManagementQuery<T>> {
-	private static String DEFAULT = "DEFAULT";
-	private static String TO = "TO";
+	private static final String DEFAULT = "DEFAULT";
+	private static final String TO = "TO";
 
 	private Optional<Iri> from = Optional.empty();
 	private Optional<Iri> to = Optional.empty();
@@ -39,6 +45,10 @@ public abstract class DestinationSourceManagementQuery<T extends DestinationSour
 		return fromDefault(false);
 	}
 
+	public T from(IRI from) {
+		return from(iri(from));
+	}
+
 	/**
 	 * Specify the query destination graph
 	 *
@@ -50,6 +60,17 @@ public abstract class DestinationSourceManagementQuery<T extends DestinationSour
 		this.to = Optional.ofNullable(to);
 
 		return toDefault(false);
+	}
+
+	/**
+	 * Specify the query destination graph
+	 *
+	 * @param to the Iri identifying the destination graph
+	 *
+	 * @return this query instance
+	 */
+	public T to(IRI to) {
+		return to(iri(to));
 	}
 
 	/**

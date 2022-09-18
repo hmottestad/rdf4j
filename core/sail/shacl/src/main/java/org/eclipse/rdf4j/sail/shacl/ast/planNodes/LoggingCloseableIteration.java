@@ -1,32 +1,29 @@
+/*******************************************************************************
+ * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Distribution License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *******************************************************************************/
+
 package org.eclipse.rdf4j.sail.shacl.ast.planNodes;
 
 import org.eclipse.rdf4j.common.iteration.CloseableIteration;
 import org.eclipse.rdf4j.sail.SailException;
-import org.eclipse.rdf4j.sail.shacl.GlobalValidationExecutionLogging;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-abstract class LoggingCloseableIteration implements CloseableIteration<ValidationTuple, SailException> {
+public abstract class LoggingCloseableIteration implements CloseableIteration<ValidationTuple, SailException> {
 
 	private final ValidationExecutionLogger validationExecutionLogger;
 	private final PlanNode planNode;
-	private final Logger logger = LoggerFactory.getLogger(getClass());
+	private boolean empty = false;
+	private boolean closed;
 
 	public LoggingCloseableIteration(PlanNode planNode, ValidationExecutionLogger validationExecutionLogger) {
 		this.planNode = planNode;
 		this.validationExecutionLogger = validationExecutionLogger;
-	}
-
-	static String leadingSpace(PlanNode planNode) {
-		return leadingSpace(planNode.depth());
-	}
-
-	static String leadingSpace(int depth) {
-		StringBuilder builder = new StringBuilder();
-		for (int i = depth; i > 0; i--) {
-			builder.append("  ");
-		}
-		return builder.toString();
 	}
 
 	@Override
@@ -34,24 +31,51 @@ abstract class LoggingCloseableIteration implements CloseableIteration<Validatio
 
 		ValidationTuple tuple = loggingNext();
 
-		if (GlobalValidationExecutionLogging.loggingEnabled) {
+		if (validationExecutionLogger.isEnabled()) {
 			validationExecutionLogger.log(planNode.depth(), planNode.getClass().getSimpleName() + ".next()", tuple,
-					planNode, planNode.getId());
+					planNode, planNode.getId(), null);
 		}
 		return tuple;
 	}
 
 	@Override
 	public final boolean hasNext() throws SailException {
-		return localHasNext();
+		if (empty) {
+			return false;
+		}
+
+		boolean hasNext = localHasNext();
+
+		if (!hasNext) {
+			empty = true;
+			assert !localHasNext() : "Iterator was initially empty, but still has more elements! " + this.getClass();
+			close();
+		}
+
+		return hasNext;
 	}
 
-	abstract ValidationTuple loggingNext() throws SailException;
-
-	abstract boolean localHasNext() throws SailException;
-
-	private String leadingSpace() {
-		return leadingSpace(planNode);
+	@Override
+	public void close() throws SailException {
+		if (!closed) {
+			this.closed = true;
+			localClose();
+		}
 	}
 
+	protected abstract ValidationTuple loggingNext() throws SailException;
+
+	protected abstract boolean localHasNext() throws SailException;
+
+	protected abstract void localClose() throws SailException;
+
+	/**
+	 * A default method since the iterators in the ShaclSail don't support remove.
+	 *
+	 * @throws SailException
+	 */
+	@Override
+	public void remove() throws SailException {
+		throw new UnsupportedOperationException();
+	}
 }

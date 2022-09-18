@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.algebra.evaluation.iterator;
 
@@ -33,13 +36,14 @@ import org.eclipse.rdf4j.query.algebra.evaluation.EvaluationStrategy;
  * @author Jeen Broekstra
  * @see <a href="http://www.w3.org/Submission/CBD/#alternatives">Concise Bounded Description - alternatives</a>
  */
+@Deprecated(since = "4.1.0")
 public class DescribeIteration extends LookAheadIteration<BindingSet, QueryEvaluationException> {
 
-	private final static String VARNAME_SUBJECT = "subject";
+	protected final static String VARNAME_SUBJECT = "subject";
 
-	private final static String VARNAME_PREDICATE = "predicate";
+	protected final static String VARNAME_PREDICATE = "predicate";
 
-	private final static String VARNAME_OBJECT = "object";
+	protected final static String VARNAME_OBJECT = "object";
 
 	private final List<String> describeExprNames;
 
@@ -60,7 +64,7 @@ public class DescribeIteration extends LookAheadIteration<BindingSet, QueryEvalu
 
 	private Mode currentMode = Mode.OUTGOING_LINKS;
 
-	private Iteration<BindingSet, QueryEvaluationException> sourceIter;
+	private final Iteration<BindingSet, QueryEvaluationException> sourceIter;
 
 	public DescribeIteration(Iteration<BindingSet, QueryEvaluationException> sourceIter, EvaluationStrategy strategy,
 			Set<String> describeExprNames, BindingSet parentBindings) {
@@ -74,7 +78,7 @@ public class DescribeIteration extends LookAheadIteration<BindingSet, QueryEvalu
 
 	private int describeExprsIndex;
 
-	private BindingSet parentBindings;
+	protected BindingSet parentBindings;
 
 	private void resetCurrentDescribeExprIter() throws QueryEvaluationException {
 		while (currentDescribeExprIter == null) {
@@ -202,7 +206,7 @@ public class DescribeIteration extends LookAheadIteration<BindingSet, QueryEvalu
 		return null;
 	}
 
-	private CloseableIteration<BindingSet, QueryEvaluationException> createNextIteration(Value subject, Value object)
+	protected CloseableIteration<BindingSet, QueryEvaluationException> createNextIteration(Value subject, Value object)
 			throws QueryEvaluationException {
 		if (subject == null && object == null) {
 			return new EmptyIteration<>();

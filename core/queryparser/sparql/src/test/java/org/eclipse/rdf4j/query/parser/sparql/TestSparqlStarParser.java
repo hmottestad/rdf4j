@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.parser.sparql;
 
@@ -29,11 +32,13 @@ import org.eclipse.rdf4j.query.algebra.Join;
 import org.eclipse.rdf4j.query.algebra.Modify;
 import org.eclipse.rdf4j.query.algebra.Projection;
 import org.eclipse.rdf4j.query.algebra.ProjectionElem;
+import org.eclipse.rdf4j.query.algebra.QueryRoot;
 import org.eclipse.rdf4j.query.algebra.Reduced;
 import org.eclipse.rdf4j.query.algebra.SingletonSet;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
 import org.eclipse.rdf4j.query.algebra.Str;
 import org.eclipse.rdf4j.query.algebra.TripleRef;
+import org.eclipse.rdf4j.query.algebra.TupleExpr;
 import org.eclipse.rdf4j.query.algebra.UpdateExpr;
 import org.eclipse.rdf4j.query.algebra.ValueConstant;
 import org.eclipse.rdf4j.query.algebra.ValueExprTripleRef;
@@ -88,8 +93,12 @@ public class TestSparqlStarParser {
 		ParsedQuery q = parser.parseQuery(simpleSparqlQuery, null);
 
 		assertNotNull(q);
-		assertTrue("expect projection", q.getTupleExpr() instanceof Projection);
-		Projection proj = (Projection) q.getTupleExpr();
+
+		TupleExpr tupleExpr = q.getTupleExpr();
+		assertTrue(tupleExpr instanceof QueryRoot);
+		tupleExpr = ((QueryRoot) tupleExpr).getArg();
+		assertTrue("expect projection", tupleExpr instanceof Projection);
+		Projection proj = (Projection) tupleExpr;
 
 		assertTrue("expect extension", proj.getArg() instanceof Extension);
 		Extension ext = (Extension) proj.getArg();
@@ -119,10 +128,7 @@ public class TestSparqlStarParser {
 	 * Projection
 	 *    ProjectionElemList
 	 *      ProjectionElem "ref"
-	 *    Extension
-	 *       ExtensionElem (ref)
-	 *          Var (name=ref)
-	 *       BindingSetAssignment ([[ref=<<urn:A urn:B "1"^^<http://www.w3.org/2001/XMLSchema#integer>>>]])
+	 *      BindingSetAssignment ([[ref=<<urn:A urn:B "1"^^<http://www.w3.org/2001/XMLSchema#integer>>>]])
 	 * @throws Exception
 	 */
 	@Test
@@ -132,22 +138,15 @@ public class TestSparqlStarParser {
 		ParsedQuery q = parser.parseQuery(simpleSparqlQuery, null);
 
 		assertNotNull(q);
-		assertTrue("expect projection", q.getTupleExpr() instanceof Projection);
-		Projection proj = (Projection) q.getTupleExpr();
+		TupleExpr tupleExpr = q.getTupleExpr();
+		assertTrue(tupleExpr instanceof QueryRoot);
+		tupleExpr = ((QueryRoot) tupleExpr).getArg();
+		assertTrue("expect projection", tupleExpr instanceof Projection);
+		Projection proj = (Projection) tupleExpr;
 
-		assertTrue("expect extension", proj.getArg() instanceof Extension);
-		Extension ext = (Extension) proj.getArg();
-
-		assertTrue("single extention elemrnt", ext.getElements().size() == 1);
-		ExtensionElem elem = ext.getElements().get(0);
-
-		assertEquals("name should match", elem.getName(), "ref");
-		assertTrue("expect Var in extention element", elem.getExpr() instanceof Var);
-		assertEquals("names should match", elem.getName(), ((Var) elem.getExpr()).getName());
-
-		assertTrue("expect BindingSetAssignment as arg", ext.getArg() instanceof BindingSetAssignment);
-		BindingSetAssignment values = (BindingSetAssignment) ext.getArg();
-		boolean oneValue[] = new boolean[] { false };
+		assertTrue("expect BindingSetAssignment as arg", proj.getArg() instanceof BindingSetAssignment);
+		BindingSetAssignment values = (BindingSetAssignment) proj.getArg();
+		boolean[] oneValue = new boolean[] { false };
 		values.getBindingSets().forEach(bs -> {
 			Value v = bs.getValue("ref");
 			assertTrue("expect binding for ref", v != null);
@@ -175,15 +174,12 @@ public class TestSparqlStarParser {
 	 *      ProjectionElem "ref"
 	 *   Extension
 	 *      ExtensionElem (ref)
-	 *         Var (name=ref)
-	 *      Extension
-	 *         ExtensionElem (ref)
-	 *            Var (name=_anon_ee568c3a_eff4_4b69_a4f4_080503da7375, anonymous)
-	 *         TripleRef
-	 *            Var (name=_const_6a63478_uri, value=urn:A, anonymous)
-	 *            Var (name=_const_6a63479_uri, value=urn:B, anonymous)
-	 *            Var (name=_const_31_lit_5fc8fb17_0, value="1"^^<http://www.w3.org/2001/XMLSchema#integer>, anonymous)
-	 *            Var (name=_anon_ee568c3a_eff4_4b69_a4f4_080503da7375, anonymous)
+	 *         Var (name=_anon_ee568c3a_eff4_4b69_a4f4_080503da7375, anonymous)
+	 *      TripleRef
+	 *         Var (name=_const_6a63478_uri, value=urn:A, anonymous)
+	 *         Var (name=_const_6a63479_uri, value=urn:B, anonymous)
+	 *         Var (name=_const_31_lit_5fc8fb17_0, value="1"^^<http://www.w3.org/2001/XMLSchema#integer>, anonymous)
+	 *         Var (name=_anon_ee568c3a_eff4_4b69_a4f4_080503da7375, anonymous)
 	 * @throws Exception
 	 */
 	@Test
@@ -193,25 +189,19 @@ public class TestSparqlStarParser {
 		ParsedQuery q = parser.parseQuery(simpleSparqlQuery, null);
 
 		assertNotNull(q);
-		assertTrue("expect projection", q.getTupleExpr() instanceof Projection);
-		Projection proj = (Projection) q.getTupleExpr();
+		TupleExpr tupleExpr = q.getTupleExpr();
+		assertTrue(tupleExpr instanceof QueryRoot);
+		tupleExpr = ((QueryRoot) tupleExpr).getArg();
+		assertTrue("expect projection", tupleExpr instanceof Projection);
+		Projection proj = (Projection) tupleExpr;
 
 		assertTrue("expect extension", proj.getArg() instanceof Extension);
 		Extension ext = (Extension) proj.getArg();
-		assertTrue("single extention elemrnt", ext.getElements().size() == 1);
+		assertTrue("single extension element", ext.getElements().size() == 1);
 		ExtensionElem elem = ext.getElements().get(0);
 
 		assertEquals("name should match", elem.getName(), "ref");
-		assertTrue("expect Var in extention element", elem.getExpr() instanceof Var);
-		assertEquals("names should match", elem.getName(), ((Var) elem.getExpr()).getName());
-
-		assertTrue("expect extension", ext.getArg() instanceof Extension);
-		ext = (Extension) ext.getArg();
-		assertTrue("single extention elemrnt", ext.getElements().size() == 1);
-		elem = ext.getElements().get(0);
-
-		assertEquals("name should match", elem.getName(), "ref");
-		assertTrue("expect Var in extention element", elem.getExpr() instanceof Var);
+		assertTrue("expect Var in extension element", elem.getExpr() instanceof Var);
 		String anonVar = ((Var) elem.getExpr()).getName();
 
 		assertTrue("expect TripleRef", ext.getArg() instanceof TripleRef);
@@ -234,15 +224,12 @@ public class TestSparqlStarParser {
 	 *      ProjectionElem "ref"
 	 *   Extension
 	 *      ExtensionElem (ref)
-	 *         Var (name=ref)
-	 *      Extension
-	 *         ExtensionElem (ref)
-	 *            Var (name=_anon_ee568c3a_eff4_4b69_a4f4_080503da7375, anonymous)
-	 *         TripleRef
-	 *            Var (name=s)
-	 *            Var (name=p)
-	 *            Var (name=o)
-	 *            Var (name=_anon_ee568c3a_eff4_4b69_a4f4_080503da7375, anonymous)
+	 *         Var (name=_anon_ee568c3a_eff4_4b69_a4f4_080503da7375, anonymous)
+	 *      TripleRef
+	 *         Var (name=s)
+	 *         Var (name=p)
+	 *         Var (name=o)
+	 *         Var (name=_anon_ee568c3a_eff4_4b69_a4f4_080503da7375, anonymous)
 	 *
 	 * @throws Exception
 	 */
@@ -253,12 +240,15 @@ public class TestSparqlStarParser {
 		ParsedQuery q = parser.parseQuery(simpleSparqlQuery, null);
 
 		assertNotNull(q);
-		assertTrue("expect projection", q.getTupleExpr() instanceof Projection);
-		Projection proj = (Projection) q.getTupleExpr();
+		TupleExpr tupleExpr = q.getTupleExpr();
+		assertTrue(tupleExpr instanceof QueryRoot);
+		tupleExpr = ((QueryRoot) tupleExpr).getArg();
+		assertTrue("expect projection", tupleExpr instanceof Projection);
+		Projection proj = (Projection) tupleExpr;
 		List<ProjectionElem> list = proj.getProjectionElemList().getElements();
 		final ArrayList<String> listNames = new ArrayList<>();
 		list.forEach(el -> {
-			listNames.add(el.getTargetName());
+			listNames.add(el.getName());
 		});
 		assertEquals("expect all bindings", 4, list.size());
 		assertTrue("expect s", listNames.contains("s"));
@@ -273,15 +263,7 @@ public class TestSparqlStarParser {
 
 		assertEquals("name should match", elem.getName(), "ref");
 		assertTrue("expect Var in extention element", elem.getExpr() instanceof Var);
-		assertEquals("names should match", elem.getName(), ((Var) elem.getExpr()).getName());
 
-		assertTrue("expect extension", ext.getArg() instanceof Extension);
-		ext = (Extension) ext.getArg();
-		assertTrue("single extention elemrnt", ext.getElements().size() == 1);
-		elem = ext.getElements().get(0);
-
-		assertEquals("name should match", elem.getName(), "ref");
-		assertTrue("expect Var in extention element", elem.getExpr() instanceof Var);
 		String anonVar = ((Var) elem.getExpr()).getName();
 
 		assertTrue("expect TripleRef", ext.getArg() instanceof TripleRef);
@@ -321,12 +303,15 @@ public class TestSparqlStarParser {
 		ParsedQuery q = parser.parseQuery(simpleSparqlQuery, null);
 
 		assertNotNull(q);
-		assertTrue("expect projection", q.getTupleExpr() instanceof Projection);
-		Projection proj = (Projection) q.getTupleExpr();
+		TupleExpr tupleExpr = q.getTupleExpr();
+		assertTrue(tupleExpr instanceof QueryRoot);
+		tupleExpr = ((QueryRoot) tupleExpr).getArg();
+		assertTrue("expect projection", tupleExpr instanceof Projection);
+		Projection proj = (Projection) tupleExpr;
 		List<ProjectionElem> list = proj.getProjectionElemList().getElements();
 		final ArrayList<String> listNames = new ArrayList<>();
 		list.forEach(el -> {
-			listNames.add(el.getTargetName());
+			listNames.add(el.getName());
 		});
 		assertEquals("expect all bindings", 4, list.size());
 		assertTrue("expect s", listNames.contains("s"));
@@ -388,12 +373,15 @@ public class TestSparqlStarParser {
 		ParsedQuery q = parser.parseQuery(simpleSparqlQuery, null);
 
 		assertNotNull(q);
-		assertTrue("expect projection", q.getTupleExpr() instanceof Projection);
-		Projection proj = (Projection) q.getTupleExpr();
+		TupleExpr tupleExpr = q.getTupleExpr();
+		assertTrue(tupleExpr instanceof QueryRoot);
+		tupleExpr = ((QueryRoot) tupleExpr).getArg();
+		assertTrue("expect projection", tupleExpr instanceof Projection);
+		Projection proj = (Projection) tupleExpr;
 		List<ProjectionElem> list = proj.getProjectionElemList().getElements();
 		final ArrayList<String> listNames = new ArrayList<>();
 		list.forEach(el -> {
-			listNames.add(el.getTargetName());
+			listNames.add(el.getName());
 		});
 		assertEquals("expect all bindings", 6, list.size());
 		assertTrue("expect s", listNames.contains("s"));
@@ -463,14 +451,17 @@ public class TestSparqlStarParser {
 		ParsedQuery q = parser.parseQuery(simpleSparqlQuery, null);
 
 		assertNotNull(q);
-		assertTrue("expect Reduced", q.getTupleExpr() instanceof Reduced);
-		assertTrue("expect projection", ((Reduced) q.getTupleExpr()).getArg() instanceof Projection);
-		Projection proj = (Projection) ((Reduced) q.getTupleExpr()).getArg();
+		TupleExpr tupleExpr = q.getTupleExpr();
+		assertTrue(tupleExpr instanceof QueryRoot);
+		tupleExpr = ((QueryRoot) tupleExpr).getArg();
+		assertTrue("expect Reduced", tupleExpr instanceof Reduced);
+		assertTrue("expect projection", ((Reduced) tupleExpr).getArg() instanceof Projection);
+		Projection proj = (Projection) ((Reduced) tupleExpr).getArg();
 
 		List<ProjectionElem> list = proj.getProjectionElemList().getElements();
 		final ArrayList<String> listTargetNames = new ArrayList<>();
 		list.forEach(el -> {
-			listTargetNames.add(el.getTargetName());
+			listTargetNames.add(el.getProjectionAlias().orElse(null));
 		});
 		assertEquals("expect all bindings", 3, list.size());
 		assertTrue("expect target subject", listTargetNames.contains("subject"));
@@ -479,7 +470,7 @@ public class TestSparqlStarParser {
 
 		final ArrayList<String> listSourceNames = new ArrayList<>();
 		list.forEach(el -> {
-			listSourceNames.add(el.getSourceName());
+			listSourceNames.add(el.getName());
 		});
 
 		assertTrue("expect extension", proj.getArg() instanceof Extension);
@@ -660,8 +651,6 @@ public class TestSparqlStarParser {
 	 *       ProjectionElem "ref"
 	 *       ProjectionElem "count"
 	 *    Extension
-	 *       ExtensionElem (ref)
-	 *          Var (name=ref)
 	 *       ExtensionElem (count)
 	 *          Count (Distinct)
 	 *             Var (name=p)
@@ -676,8 +665,8 @@ public class TestSparqlStarParser {
 	 *                Var (name=_anon_3ddeacea_c54c_4db0_bb6e_2f699772e5f8, anonymous)
 	 *          GroupElem
 	 *             Count (Distinct)
-	 *                Var (name=p)	 * @throws Exception
-	 *
+	 *                Var (name=p)
+	 *                	 
 	 * @throws Exception
 	 */
 	@Test
@@ -687,12 +676,15 @@ public class TestSparqlStarParser {
 		ParsedQuery q = parser.parseQuery(simpleSparqlQuery, null);
 
 		assertNotNull(q);
-		assertTrue("expect projection", q.getTupleExpr() instanceof Projection);
-		Projection proj = (Projection) q.getTupleExpr();
+		TupleExpr tupleExpr = q.getTupleExpr();
+		assertTrue(tupleExpr instanceof QueryRoot);
+		tupleExpr = ((QueryRoot) tupleExpr).getArg();
+		assertTrue("expect projection", tupleExpr instanceof Projection);
+		Projection proj = (Projection) tupleExpr;
 		List<ProjectionElem> list = proj.getProjectionElemList().getElements();
 		final ArrayList<String> listNames = new ArrayList<>();
 		list.forEach(el -> {
-			listNames.add(el.getTargetName());
+			listNames.add(el.getName());
 		});
 		assertEquals("expect all bindings", 2, list.size());
 		assertTrue("expect ref", listNames.contains("ref"));
@@ -700,14 +692,9 @@ public class TestSparqlStarParser {
 
 		assertTrue("expect extension", proj.getArg() instanceof Extension);
 		Extension ext = (Extension) proj.getArg();
-		assertTrue("two extention elements", ext.getElements().size() == 2);
+		assertTrue("one extension element", ext.getElements().size() == 1);
 		ExtensionElem elem = ext.getElements().get(0);
 
-		assertEquals("name should match", elem.getName(), "ref");
-		assertTrue("expect Var in extention element", elem.getExpr() instanceof Var);
-		assertEquals("names should match", elem.getName(), ((Var) elem.getExpr()).getName());
-
-		elem = ext.getElements().get(1);
 		assertEquals("name should match", elem.getName(), "count");
 		assertTrue("expect Count in extention element", elem.getExpr() instanceof Count);
 		Count count = (Count) elem.getExpr();
@@ -772,12 +759,15 @@ public class TestSparqlStarParser {
 		ParsedQuery q = parser.parseQuery(simpleSparqlQuery, null);
 
 		assertNotNull(q);
-		assertTrue("expect projection", q.getTupleExpr() instanceof Projection);
-		Projection proj = (Projection) q.getTupleExpr();
+		TupleExpr tupleExpr = q.getTupleExpr();
+		assertTrue(tupleExpr instanceof QueryRoot);
+		tupleExpr = ((QueryRoot) tupleExpr).getArg();
+		assertTrue("expect projection", tupleExpr instanceof Projection);
+		Projection proj = (Projection) tupleExpr;
 		List<ProjectionElem> list = proj.getProjectionElemList().getElements();
 		final ArrayList<String> listNames = new ArrayList<>();
 		list.forEach(el -> {
-			listNames.add(el.getTargetName());
+			listNames.add(el.getName());
 		});
 		assertEquals("expect all bindings", 3, list.size());
 		assertTrue("expect s", listNames.contains("s"));
@@ -835,12 +825,15 @@ public class TestSparqlStarParser {
 		ParsedQuery q = parser.parseQuery(simpleSparqlQuery, null);
 
 		assertNotNull(q);
-		assertTrue("expect projection", q.getTupleExpr() instanceof Projection);
-		Projection proj = (Projection) q.getTupleExpr();
+		TupleExpr tupleExpr = q.getTupleExpr();
+		assertTrue(tupleExpr instanceof QueryRoot);
+		tupleExpr = ((QueryRoot) tupleExpr).getArg();
+		assertTrue("expect projection", tupleExpr instanceof Projection);
+		Projection proj = (Projection) tupleExpr;
 		List<ProjectionElem> list = proj.getProjectionElemList().getElements();
 		final ArrayList<String> listNames = new ArrayList<>();
 		list.forEach(el -> {
-			listNames.add(el.getTargetName());
+			listNames.add(el.getName());
 		});
 		assertEquals("expect one binding", 1, list.size());
 		assertTrue("expect str", listNames.contains("str"));
@@ -911,7 +904,7 @@ public class TestSparqlStarParser {
 		      Var (name=_anon_24e6f014_3e16_49f9_ad0f_ef6d8045bbe9, anonymous)
 		      Var (name=_const_6a634a7_uri, value=urn:p, anonymous)
 		      Var (name=_const_31_lit_5fc8fb17_0, value="1"^^<http://www.w3.org/2001/XMLSchema#integer>, anonymous)
-	 
+	
 		   Extension
 		      ExtensionElem (_anon_24e6f014_3e16_49f9_ad0f_ef6d8045bbe9)
 		         ValueExprTripleRef
@@ -927,7 +920,7 @@ public class TestSparqlStarParser {
 		         StatementPattern
 		            Var (name=_anon_9e07cd00_0c02_4754_89ad_0ce4a5264d6e, anonymous)
 		            Var (name=_const_6a634a7_uri, value=urn:p, anonymous)
-		            Var (name=_const_31_lit_5fc8fb17_0, value="1"^^<http://www.w3.org/2001/XMLSchema#integer>, anonymous)	 
+		            Var (name=_const_31_lit_5fc8fb17_0, value="1"^^<http://www.w3.org/2001/XMLSchema#integer>, anonymous)
 	 * @throws Exception
 	 */
 	@Test

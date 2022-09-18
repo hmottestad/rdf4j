@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.model.datatypes;
 
@@ -12,6 +15,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.base.CoreDatatype;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.junit.Test;
 
@@ -177,6 +181,9 @@ public class XMLDatatypeUtilTest {
 	private void testValidation(String[] values, IRI datatype, boolean validValues) {
 		for (String value : values) {
 			boolean result = XMLDatatypeUtil.isValidValue(value, datatype);
+			boolean resultCoreDatatype = XMLDatatypeUtil.isValidValue(value, CoreDatatype.from(datatype));
+			assertEquals(result, resultCoreDatatype);
+
 			if (validValues) {
 				if (!result) {
 					fail("value " + value + " should have validated for type " + datatype);

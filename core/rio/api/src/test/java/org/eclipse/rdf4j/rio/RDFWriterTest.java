@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.rio;
 
@@ -79,7 +82,7 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class RDFWriterTest {
 
-	private static Logger logger = LoggerFactory.getLogger(RDFWriterTest.class);
+	private static final Logger logger = LoggerFactory.getLogger(RDFWriterTest.class);
 
 	@Rule
 	public TemporaryFolder tempDir = new TemporaryFolder();
@@ -90,77 +93,77 @@ public abstract class RDFWriterTest {
 
 	protected ValueFactory vf;
 
-	private BNode bnode;
+	private final BNode bnode;
 
-	private BNode bnodeEmpty;
+	private final BNode bnodeEmpty;
 
-	private BNode bnodeSingleLetter;
+	private final BNode bnodeSingleLetter;
 
-	private BNode bnodeDuplicateLetter;
+	private final BNode bnodeDuplicateLetter;
 
-	private BNode bnodeNumeric;
+	private final BNode bnodeNumeric;
 
-	private BNode bnodeDashes;
+	private final BNode bnodeDashes;
 
-	private BNode bnodeSpecialChars;
+	private final BNode bnodeSpecialChars;
 
-	private BNode bnodeSingleUseSubject;
+	private final BNode bnodeSingleUseSubject;
 
-	private BNode bnodeSingleUseObject;
+	private final BNode bnodeSingleUseObject;
 
-	private BNode bnodeUseAcrossContextsSubject;
+	private final BNode bnodeUseAcrossContextsSubject;
 
-	private BNode bnodeUseAcrossContextsSubjectAndObject;
+	private final BNode bnodeUseAcrossContextsSubjectAndObject;
 
-	private BNode bnodeUseAcrossContextsObject;
+	private final BNode bnodeUseAcrossContextsObject;
 
-	private IRI uri1;
+	private final IRI uri1;
 
-	private IRI uri2;
+	private final IRI uri2;
 
-	private IRI uri3;
+	private final IRI uri3;
 
-	private IRI uri4;
+	private final IRI uri4;
 
-	private IRI uri5;
+	private final IRI uri5;
 
-	private Triple triple1;
+	private final Triple triple1;
 
-	private Triple triple2;
+	private final Triple triple2;
 
-	private Triple triple3;
+	private final Triple triple3;
 
-	private Triple triple4;
+	private final Triple triple4;
 
-	private Triple triple5;
+	private final Triple triple5;
 
-	private Triple triple6;
+	private final Triple triple6;
 
-	private Literal plainLit;
+	private final Literal plainLit;
 
-	private Literal dtLit;
+	private final Literal dtLit;
 
-	private Literal langLit;
+	private final Literal langLit;
 
-	private Literal litWithNewlineAtEnd;
+	private final Literal litWithNewlineAtEnd;
 
-	private Literal litWithNewlineAtStart;
+	private final Literal litWithNewlineAtStart;
 
-	private Literal litWithMultipleNewlines;
+	private final Literal litWithMultipleNewlines;
 
-	private Literal litWithSingleQuotes;
+	private final Literal litWithSingleQuotes;
 
-	private Literal litWithDoubleQuotes;
+	private final Literal litWithDoubleQuotes;
 
-	private Literal litBigPlaceholder;
+	private final Literal litBigPlaceholder;
 
-	private String exNs;
+	private final String exNs;
 
-	private List<Resource> potentialSubjects;
+	private final List<Resource> potentialSubjects;
 
-	private List<Value> potentialObjects;
+	private final List<Value> potentialObjects;
 
-	private List<IRI> potentialPredicates;
+	private final List<IRI> potentialPredicates;
 
 	protected RDFWriterTest(RDFWriterFactory writerF, RDFParserFactory parserF) {
 		rdfWriterFactory = writerF;
@@ -757,7 +760,7 @@ public abstract class RDFWriterTest {
 			IRI pred = potentialPredicates.get(prng.nextInt(potentialPredicates.size()));
 			while (obj instanceof Triple && pred.equals(RDF.TYPE)) {
 				// Avoid statements "x rdf:type <<triple>>" as those use the shorter syntax in RDFXMLPrettyWriter
-				// and the writer produces invalid XML in that case. Even though the RDF* triples are encoded as
+				// and the writer produces invalid XML in that case. Even though the RDF-star triples are encoded as
 				// valid IRIs, XML has limitations on what characters may form an XML tag name and thus a limitation
 				// on what IRIs may be used in predicates (predicates are XML tags) or the short form of rdf:type
 				// (where the type is also an XML tag).
@@ -1848,8 +1851,8 @@ public abstract class RDFWriterTest {
 		rdfParser.setRDFHandler(new StatementCollector(parsedOutput));
 		rdfParser.parse(inputReader, "");
 
-		// 1 non-RDF* statement
-		// 1 RDF* statement whose conversion yields 20 additional statements:
+		// 1 non-RDF-star statement
+		// 1 RDF-star statement whose conversion yields 20 additional statements:
 		// 4 for triple3
 		// 4 for triple6
 		// 4 for triple2 (contained in triple6)
@@ -1870,7 +1873,7 @@ public abstract class RDFWriterTest {
 	 * Get the {@link RioSetting}s expected to be returned by {@link RDFWriter#getSupportedSettings()}. Used by
 	 * {@link #testGetSupportedSettings()} to determine if the output of {@link RDFWriter#getSupportedSettings()} is as
 	 * expected for the concrete writer implementation.
-	 * 
+	 *
 	 * @return an array of {@link RioSetting}s.
 	 */
 	protected abstract RioSetting<?>[] getExpectedSupportedSettings();

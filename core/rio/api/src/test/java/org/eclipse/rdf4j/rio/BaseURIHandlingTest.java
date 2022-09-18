@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.rio;
 
@@ -16,7 +19,7 @@ import org.junit.Test;
 
 /**
  * Test cases for handling of base URIs by {@link RDFParser} implementations.
- * 
+ *
  * @author Jeen Broekstra
  *
  */
@@ -77,21 +80,21 @@ public abstract class BaseURIHandlingTest {
 
 	/**
 	 * Get an {@link InputStream} with data serialized in the parser format, containing no relative IRIs
-	 * 
+	 *
 	 */
 	protected abstract InputStream getDataWithAbsoluteIris();
 
 	/**
 	 * Get an {@link InputStream} with data serialized in the parser format, containing some relative IRIs, and no base
 	 * IRI provided inside the data itself.
-	 * 
+	 *
 	 */
 	protected abstract InputStream getDataWithRelativeIris();
 
 	/**
 	 * Get an {@link InputStream} with data serialized in the parser format, containing some relative IRIs, and a base
 	 * IRI provided inside the data itself.
-	 * 
+	 *
 	 */
 	protected abstract InputStream getDataWithRelativeIris_InternalBase();
 

@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 
 package org.eclipse.rdf4j.sparqlbuilder.core;
@@ -124,6 +127,23 @@ public class SparqlBuilderTest {
 
 		query.prefix(dc, ns).select(title, price).where(x.has(dc.iri("title"), title), pricePattern);
 		Assert.assertThat(query.getQueryString(), CoreMatchers.containsString("( 20 + ( 10 / 5 ) ) || 30 < 50 )"));
+	}
+
+	@Test
+	public void testMultipleFilters() {
+		Prefix dc = SparqlBuilder.prefix("dc", iri(DC_NS)), ns = SparqlBuilder.prefix("ns", iri(EXAMPLE_ORG_NS));
+		Variable title = SparqlBuilder.var("title"), price = SparqlBuilder.var("price"), x = SparqlBuilder.var("x");
+
+		GraphPatternNotTriples pricePattern = GraphPatterns.and(x.has(ns.iri("price"), price))
+				.filter(Expressions.lt(price, Rdf.literalOf(50)))
+				.filter(Expressions.gt(price, Rdf.literalOf(30)))
+				.optional();
+		query.prefix(dc, ns)
+				.select(title, price)
+				.where(x.has(dc.iri("title"), title),
+						pricePattern);
+		Assert.assertThat(query.getQueryString(), CoreMatchers.containsString("FILTER ( ?price < 50 )"));
+		Assert.assertThat(query.getQueryString(), CoreMatchers.containsString("FILTER ( ?price > 30 )"));
 	}
 
 }

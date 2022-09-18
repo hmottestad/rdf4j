@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.memory;
 
@@ -12,8 +15,8 @@ import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.eclipse.rdf4j.IsolationLevels;
 import org.eclipse.rdf4j.common.concurrent.locks.Lock;
+import org.eclipse.rdf4j.common.transaction.IsolationLevels;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.query.algebra.evaluation.EvaluationStrategy;
 import org.eclipse.rdf4j.query.algebra.evaluation.EvaluationStrategyFactory;
@@ -36,7 +39,8 @@ import org.slf4j.LoggerFactory;
  * An implementation of the Sail interface that stores its data in main memory and that can use a file for persistent
  * storage. This Sail implementation supports single, isolated transactions. This means that changes to the data are not
  * visible until a transaction is committed and that concurrent transactions are not possible. When another transaction
- * is active, calls to <tt>startTransaction()</tt> will block until the active transaction is committed or rolled back.
+ * is active, calls to <var>startTransaction()</var> will block until the active transaction is committed or rolled
+ * back.
  *
  * The MemoryStore is designed for datasets with fewer than 100,000 triples. The MemoryStore uses hash tables, and when
  * these hash tables fill up it copies the values to larger hash tables. This can cause strain on the garbage collector
@@ -169,10 +173,10 @@ public class MemoryStore extends AbstractNotifyingSail implements FederatedServi
 	 * Setting this variable to 0 will force a file sync immediately after each commit. A negative value will deactivate
 	 * file synchronization until the Sail is shut down. A positive value will postpone the synchronization for at least
 	 * that amount of milliseconds. If in the meantime a new transaction is started, the file synchronization will be
-	 * rescheduled to wait for another <tt>syncDelay</tt> ms. This way, bursts of transaction events can be combined in
-	 * one file sync.
+	 * rescheduled to wait for another <var>syncDelay</var> ms. This way, bursts of transaction events can be combined
+	 * in one file sync.
 	 * <p>
-	 * The default value for this parameter is <tt>0</tt> (immediate synchronization).
+	 * The default value for this parameter is <var>0</var> (immediate synchronization).
 	 *
 	 * @param syncDelay The sync delay in milliseconds.
 	 */

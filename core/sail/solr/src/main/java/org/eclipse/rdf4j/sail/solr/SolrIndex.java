@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.solr;
 
@@ -38,7 +41,6 @@ import org.eclipse.rdf4j.sail.lucene.DocumentScore;
 import org.eclipse.rdf4j.sail.lucene.LuceneSail;
 import org.eclipse.rdf4j.sail.lucene.SearchDocument;
 import org.eclipse.rdf4j.sail.lucene.SearchFields;
-import org.eclipse.rdf4j.sail.lucene.SearchQuery;
 import org.eclipse.rdf4j.sail.lucene.util.GeoUnits;
 import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.context.SpatialContextFactory;
@@ -274,30 +276,7 @@ public class SolrIndex extends AbstractSearchIndex {
 		}
 	}
 
-	@Override
-	public void beginReading() throws IOException {
-	}
-
-	@Override
-	public void endReading() throws IOException {
-	}
-
 	// //////////////////////////////// Methods for querying the index
-
-	/**
-	 * Parse the passed query.To be removed, no longer used.
-	 *
-	 * @param query       string
-	 * @param propertyURI
-	 * @return the parsed query
-	 * @throws ParseException when the parsing brakes
-	 */
-	@Override
-	@Deprecated
-	protected SearchQuery parseQuery(String query, IRI propertyURI) throws MalformedQueryException {
-		SolrQuery q = prepareQuery(propertyURI, new SolrQuery(query));
-		return new SolrSearchQuery(q, this);
-	}
 
 	/**
 	 * Parse the passed query.
@@ -348,22 +327,6 @@ public class SolrIndex extends AbstractSearchIndex {
 			return new SolrDocumentScore(doc, docHighlighting);
 		});
 	}
-
-	// /**
-	// * Parses an id-string used for a context filed (a serialized resource)
-	// back to a resource.
-	// * <b>CAN RETURN NULL</b>
-	// * Inverse method of {@link #getResourceID(Resource)}
-	// * @param idString
-	// * @return null if the passed idString was the {@link #CONTEXT_NULL}
-	// constant
-	// */
-	// private Resource getContextResource(String idString) {
-	// if (CONTEXT_NULL.equals(idString))
-	// return null;
-	// else
-	// return getResource(idString);
-	// }
 
 	/**
 	 * Evaluates the given query only for the given resource.
@@ -614,14 +577,10 @@ public class SolrIndex extends AbstractSearchIndex {
 	 */
 	@Override
 	public synchronized void clearContexts(Resource... contexts) throws IOException {
-
-		// logger.warn("Clearing contexts operation did not change the index: contexts are not indexed at the moment");
-
 		logger.debug("deleting contexts: {}", Arrays.toString(contexts));
 		// these resources have to be read from the underlying rdf store
 		// and their triples have to be added to the luceneindex after deletion of
 		// documents
-		// HashSet<Resource> resourcesToUpdate = new HashSet<Resource>();
 
 		try {
 			// remove all contexts passed

@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.shacl.ast.planNodes;
 
@@ -12,7 +15,6 @@ import java.util.function.Consumer;
 import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.rdf4j.common.iteration.CloseableIteration;
 import org.eclipse.rdf4j.sail.SailException;
-import org.eclipse.rdf4j.sail.shacl.GlobalValidationExecutionLogging;
 
 /**
  * Used for adding a custom log statement to tuples as they pass through. Should only be used for debugging.
@@ -46,11 +48,11 @@ public class DebugPlanNode implements PlanNode {
 	@Override
 	public CloseableIteration<? extends ValidationTuple, SailException> iterator() {
 
-		if (validationExecutionLogger == null && GlobalValidationExecutionLogging.loggingEnabled) {
+		if (validationExecutionLogger == null && validationExecutionLogger.isEnabled()) {
 			throw new IllegalStateException("Did not receive validationExecutionLogger before .iterator() was called!");
 		}
 
-		return new CloseableIteration<ValidationTuple, SailException>() {
+		return new CloseableIteration<>() {
 
 			final CloseableIteration<? extends ValidationTuple, SailException> iterator = parent.iterator();
 
@@ -66,8 +68,8 @@ public class DebugPlanNode implements PlanNode {
 					debugPoint.accept(next);
 				}
 
-				if (message != null && GlobalValidationExecutionLogging.loggingEnabled) {
-					validationExecutionLogger.log(depth(), message, next, DebugPlanNode.this, getId());
+				if (message != null && validationExecutionLogger.isEnabled()) {
+					validationExecutionLogger.log(depth(), message, next, DebugPlanNode.this, getId(), null);
 				}
 				return next;
 			}

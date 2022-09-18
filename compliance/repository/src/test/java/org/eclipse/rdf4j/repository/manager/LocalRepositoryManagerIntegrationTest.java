@@ -1,25 +1,26 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.repository.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.impl.TreeModel;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.Repository;
@@ -31,6 +32,8 @@ import org.eclipse.rdf4j.repository.config.RepositoryConfigUtil;
 import org.eclipse.rdf4j.repository.config.RepositoryImplConfig;
 import org.eclipse.rdf4j.repository.sail.config.ProxyRepositoryConfig;
 import org.eclipse.rdf4j.repository.sail.config.SailRepositoryConfig;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.config.MemoryStoreConfig;
 import org.junit.After;
 import org.junit.Before;
@@ -113,7 +116,7 @@ public class LocalRepositoryManagerIntegrationTest extends RepositoryManagerInte
 		}
 
 		subject = new LocalRepositoryManager(datadir);
-		subject.initialize();
+		subject.init();
 		Repository rep2 = subject.getRepository(TEST_REPO);
 		assertNotNull("Expected repository to exist.", rep2);
 		assertTrue("Expected repository to be initialized.", rep2.isInitialized());
@@ -142,7 +145,7 @@ public class LocalRepositoryManagerIntegrationTest extends RepositoryManagerInte
 		}
 
 		subject = new LocalRepositoryManager(datadir);
-		subject.initialize();
+		subject.init();
 		Repository rep2 = subject.getRepository(TEST_REPO);
 		assertNotNull("Expected repository to exist.", rep2);
 		assertTrue("Expected repository to be initialized.", rep2.isInitialized());
@@ -167,74 +170,7 @@ public class LocalRepositoryManagerIntegrationTest extends RepositoryManagerInte
 		assertThat(subject.isSafeToRemove(TEST_REPO)).isFalse();
 		subject.removeRepository(PROXY_ID);
 		assertThat(subject.hasRepositoryConfig(PROXY_ID)).isFalse();
-		;
 		assertThat(subject.isSafeToRemove(TEST_REPO)).isTrue();
-		;
-	}
-
-	@Test
-	@Deprecated
-	public void testAddToSystemRepository() {
-		RepositoryConfig config = subject.getRepositoryConfig(TEST_REPO);
-		subject.addRepositoryConfig(new RepositoryConfig(SystemRepository.ID, new SystemRepositoryConfig()));
-		subject.shutDown();
-		subject = new LocalRepositoryManager(datadir);
-		subject.initialize();
-		try (RepositoryConnection con = subject.getSystemRepository().getConnection()) {
-			Model model = new TreeModel();
-			config.setID("changed");
-			config.export(model, con.getValueFactory().createBNode());
-			con.begin();
-			con.add(model, con.getValueFactory().createBNode());
-			con.commit();
-		}
-		assertTrue(subject.hasRepositoryConfig("changed"));
-	}
-
-	@Test
-	@Deprecated
-	public void testModifySystemRepository() {
-		RepositoryConfig config = subject.getRepositoryConfig(TEST_REPO);
-		subject.addRepositoryConfig(new RepositoryConfig(SystemRepository.ID, new SystemRepositoryConfig()));
-		subject.shutDown();
-		subject = new LocalRepositoryManager(datadir);
-		subject.initialize();
-		try (RepositoryConnection con = subject.getSystemRepository().getConnection()) {
-			Model model = new TreeModel();
-			config.setTitle("Changed");
-			config.export(model, con.getValueFactory().createBNode());
-			Resource ctx = RepositoryConfigUtil.getContext(con, config.getID());
-			con.begin();
-			con.clear(ctx);
-			con.add(model, ctx == null ? con.getValueFactory().createBNode() : ctx);
-			con.commit();
-		}
-		assertEquals("Changed", subject.getRepositoryConfig(TEST_REPO).getTitle());
-	}
-
-	@Test
-	@Deprecated
-	public void testRemoveFromSystemRepository() {
-		RepositoryConfig config = subject.getRepositoryConfig(TEST_REPO);
-		subject.addRepositoryConfig(new RepositoryConfig(SystemRepository.ID, new SystemRepositoryConfig()));
-		subject.shutDown();
-		subject = new LocalRepositoryManager(datadir);
-		subject.initialize();
-		try (RepositoryConnection con = subject.getSystemRepository().getConnection()) {
-			Model model = new TreeModel();
-			config.setID("changed");
-			config.export(model, con.getValueFactory().createBNode());
-			con.begin();
-			con.add(model, con.getValueFactory().createBNode());
-			con.commit();
-		}
-		assertTrue(subject.hasRepositoryConfig("changed"));
-		try (RepositoryConnection con = subject.getSystemRepository().getConnection()) {
-			con.begin();
-			con.clear(RepositoryConfigUtil.getContext(con, config.getID()));
-			con.commit();
-		}
-		assertFalse(subject.hasRepositoryConfig(config.getID()));
 	}
 
 	/**
@@ -252,4 +188,14 @@ public class LocalRepositoryManagerIntegrationTest extends RepositoryManagerInte
 			fail(e.getMessage());
 		}
 	}
+
+	@Test(expected = RepositoryConfigException.class)
+	public void testAddConfig_validation() throws Exception {
+		InputStream in = getClass().getResourceAsStream("/fixtures/memory-invalid.ttl");
+		Model model = Rio.parse(in, RDFFormat.TURTLE);
+		RepositoryConfig config = RepositoryConfigUtil.getRepositoryConfig(model, "Test");
+
+		subject.addRepositoryConfig(config);
+	}
+
 }

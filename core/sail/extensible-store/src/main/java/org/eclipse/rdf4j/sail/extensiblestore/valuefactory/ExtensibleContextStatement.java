@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.extensiblestore.valuefactory;
 
@@ -20,10 +23,10 @@ public class ExtensibleContextStatement extends ContextStatement implements Exte
 	/**
 	 * Creates a new Statement with the supplied subject, predicate and object for the specified associated context.
 	 *
-	 * @param subject   The statement's subject, must not be <tt>null</tt>.
-	 * @param predicate The statement's predicate, must not be <tt>null</tt>.
-	 * @param object    The statement's object, must not be <tt>null</tt>.
-	 * @param context   The statement's context, <tt>null</tt> to indicate no context is associated.
+	 * @param subject   The statement's subject, must not be <var>null</var>.
+	 * @param predicate The statement's predicate, must not be <var>null</var>.
+	 * @param object    The statement's object, must not be <var>null</var>.
+	 * @param context   The statement's context, <var>null</var> to indicate no context is associated.
 	 */
 	public ExtensibleContextStatement(Resource subject, IRI predicate, Value object, Resource context,
 			boolean inferred) {

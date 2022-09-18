@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.resultio.sparqlxml;
 
@@ -70,7 +73,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Ansell
  */
-abstract class AbstractSPARQLXMLWriter extends AbstractQueryResultWriter implements QueryResultWriter, CharSink {
+abstract class AbstractSPARQLXMLWriter extends AbstractQueryResultWriter implements CharSink {
 
 	/*-----------*
 	 * Variables *
@@ -92,7 +95,7 @@ abstract class AbstractSPARQLXMLWriter extends AbstractQueryResultWriter impleme
 	/**
 	 * Map with keys as namespace URI strings and the values as the shortened prefixes.
 	 */
-	private Map<String, String> namespaceTable = new HashMap<>();
+	private final Map<String, String> namespaceTable = new HashMap<>();
 
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -121,7 +124,7 @@ abstract class AbstractSPARQLXMLWriter extends AbstractQueryResultWriter impleme
 
 	/**
 	 * Enables/disables addition of indentation characters and newlines in the XML document. By default, pretty-printing
-	 * is set to <tt>true</tt>. If set to <tt>false</tt>, no indentation and newlines are added to the XML document.
+	 * is set to <var>true</var>. If set to <var>false</var>, no indentation and newlines are added to the XML document.
 	 * This method has to be used before writing starts (that is, before {@link #startDocument} is called).
 	 *
 	 * @deprecated Use {@link #getWriterConfig()} .set(BasicWriterSettings.PRETTY_PRINT, prettyPrint) instead.

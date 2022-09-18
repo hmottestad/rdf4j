@@ -1,21 +1,28 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.algebra;
 
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Objects;
 
+import org.eclipse.rdf4j.common.annotation.Experimental;
 import org.eclipse.rdf4j.query.algebra.helpers.QueryModelTreePrinter;
 
 /**
  * Base implementation of {@link QueryModelNode}.
  */
 public abstract class AbstractQueryModelNode implements QueryModelNode, VariableScopeChange, GraphPatternGroupable {
+
+	private static final double CARDINALITY_NOT_SET = Double.MIN_VALUE;
 
 	/*-----------*
 	 * Variables *
@@ -31,6 +38,8 @@ public abstract class AbstractQueryModelNode implements QueryModelNode, Variable
 	private long resultSizeActual = -1;
 	private double costEstimate = -1;
 	private long totalTimeNanosActual = -1;
+
+	private double cardinality = CARDINALITY_NOT_SET;
 
 	/*---------*
 	 * Methods *
@@ -78,7 +87,7 @@ public abstract class AbstractQueryModelNode implements QueryModelNode, Variable
 
 	/**
 	 * Default implementation of {@link QueryModelNode#replaceChildNode(QueryModelNode, QueryModelNode)} that throws an
-	 * {@link IllegalArgumentException} indicating that <tt>current</tt> is not a child node of this node.
+	 * {@link IllegalArgumentException} indicating that <var>current</var> is not a child node of this node.
 	 */
 	@Override
 	public void replaceChildNode(QueryModelNode current, QueryModelNode replacement) {
@@ -87,7 +96,7 @@ public abstract class AbstractQueryModelNode implements QueryModelNode, Variable
 
 	/**
 	 * Default implementation of {@link QueryModelNode#replaceWith(QueryModelNode)} that throws an
-	 * {@link IllegalArgumentException} indicating that <tt>current</tt> is not a child node of this node.
+	 * {@link IllegalArgumentException} indicating that <var>current</var> is not a child node of this node.
 	 */
 	@Override
 	public void replaceWith(QueryModelNode replacement) {
@@ -118,6 +127,8 @@ public abstract class AbstractQueryModelNode implements QueryModelNode, Variable
 		try {
 			AbstractQueryModelNode clone = (AbstractQueryModelNode) super.clone();
 			clone.setVariableScopeChange(this.isVariableScopeChange());
+			clone.cardinality = CARDINALITY_NOT_SET;
+			clone.parent = null;
 			return clone;
 		} catch (CloneNotSupportedException e) {
 			throw new RuntimeException("Query model nodes are required to be cloneable", e);
@@ -139,7 +150,7 @@ public abstract class AbstractQueryModelNode implements QueryModelNode, Variable
 	}
 
 	protected boolean nullEquals(Object o1, Object o2) {
-		return o1 == o2 || o1 != null && o1.equals(o2);
+		return Objects.equals(o1, o2);
 	}
 
 	@Override
@@ -183,7 +194,6 @@ public abstract class AbstractQueryModelNode implements QueryModelNode, Variable
 	}
 
 	/**
-	 *
 	 * @return Human readable number. Eg. 12.1M for 1212213.4 and UNKNOWN for -1.
 	 */
 	static String toHumanReadbleNumber(double number) {
@@ -202,4 +212,31 @@ public abstract class AbstractQueryModelNode implements QueryModelNode, Variable
 
 		return humanReadbleString;
 	}
+
+	@Experimental
+	public double getCardinality() {
+		assert cardinality != CARDINALITY_NOT_SET;
+		return cardinality;
+	}
+
+	@Experimental
+	public void setCardinality(double cardinality) {
+		this.cardinality = cardinality;
+	}
+
+	@Experimental
+	public void resetCardinality() {
+		this.cardinality = CARDINALITY_NOT_SET;
+	}
+
+	@Experimental
+	public boolean isCardinalitySet() {
+		return shouldCacheCardinality() && cardinality != CARDINALITY_NOT_SET;
+	}
+
+	@Experimental
+	protected boolean shouldCacheCardinality() {
+		return false;
+	}
+
 }

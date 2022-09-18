@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.federated.algebra;
 
@@ -55,11 +58,12 @@ public class StatementSourcePattern extends FedXStatementPattern {
 	public CloseableIteration<BindingSet, QueryEvaluationException> evaluate(BindingSet bindings)
 			throws QueryEvaluationException {
 
+		WorkerUnionBase<BindingSet> union = null;
 		try {
 
 			AtomicBoolean isEvaluated = new AtomicBoolean(false); // is filter evaluated in prepared query
 			String preparedQuery = null; // used for some triple sources
-			WorkerUnionBase<BindingSet> union = federationContext.getManager().createWorkerUnion(queryInfo);
+			union = federationContext.getManager().createWorkerUnion(queryInfo);
 
 			for (StatementSource source : statementSources) {
 
@@ -113,7 +117,15 @@ public class StatementSourcePattern extends FedXStatementPattern {
 			}
 
 		} catch (RepositoryException | MalformedQueryException e) {
+			if (union != null) {
+				union.close();
+			}
 			throw new QueryEvaluationException(e);
+		} catch (Throwable t) {
+			if (union != null) {
+				union.close();
+			}
+			throw t;
 		}
 	}
 

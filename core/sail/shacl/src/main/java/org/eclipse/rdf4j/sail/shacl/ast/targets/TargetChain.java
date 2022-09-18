@@ -1,3 +1,14 @@
+/*******************************************************************************
+ * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Distribution License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *******************************************************************************/
+
 package org.eclipse.rdf4j.sail.shacl.ast.targets;
 
 import java.util.ArrayDeque;
@@ -5,10 +16,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
-import org.eclipse.rdf4j.sail.shacl.RdfsSubClassOfReasoner;
+import org.eclipse.rdf4j.sail.shacl.ast.StatementMatcher;
 import org.eclipse.rdf4j.sail.shacl.ast.Targetable;
 import org.eclipse.rdf4j.sail.shacl.ast.constraintcomponents.ConstraintComponent;
 import org.eclipse.rdf4j.sail.shacl.ast.paths.Path;
+import org.eclipse.rdf4j.sail.shacl.wrapper.data.RdfsSubClassOfReasoner;
 
 public class TargetChain {
 
@@ -61,8 +73,9 @@ public class TargetChain {
 		return Optional.empty();
 	}
 
-	public EffectiveTarget getEffectiveTarget(String targetVarPrefix, ConstraintComponent.Scope scope,
-			RdfsSubClassOfReasoner rdfsSubClassOfReasoner) {
+	public EffectiveTarget getEffectiveTarget(ConstraintComponent.Scope scope,
+			RdfsSubClassOfReasoner rdfsSubClassOfReasoner,
+			StatementMatcher.StableRandomVariableProvider stableRandomVariableProvider) {
 
 		ArrayDeque<Targetable> newChain = new ArrayDeque<>(chain);
 
@@ -72,7 +85,7 @@ public class TargetChain {
 			targetable = newChain.removeLast();
 		}
 
-		return new EffectiveTarget(newChain, targetable, targetVarPrefix, rdfsSubClassOfReasoner);
+		return new EffectiveTarget(newChain, targetable, rdfsSubClassOfReasoner, stableRandomVariableProvider);
 	}
 
 }

@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.federated.evaluation;
 
@@ -54,13 +57,11 @@ public abstract class TripleSourceBase implements TripleSource {
 	protected final FederationContext federationContext;
 	protected final Monitoring monitoringService;
 	protected final Endpoint endpoint;
-	protected final FederationEvalStrategy strategy;
 
 	public TripleSourceBase(FederationContext federationContext, Endpoint endpoint) {
 		this.federationContext = federationContext;
 		this.monitoringService = federationContext.getMonitoringService();
 		this.endpoint = endpoint;
-		this.strategy = federationContext.getStrategy();
 	}
 
 	@Override
@@ -81,7 +82,7 @@ public abstract class TripleSourceBase implements TripleSource {
 				if (queryInfo.getResultHandler().isPresent()) {
 					// pass through result to configured handler, and return an empty iteration as marker result
 					tQuery.evaluate(queryInfo.getResultHandler().get());
-					resultHolder.set(new EmptyIteration<BindingSet, QueryEvaluationException>());
+					resultHolder.set(new EmptyIteration<>());
 				} else {
 					resultHolder.set(tQuery.evaluate());
 				}
@@ -96,7 +97,7 @@ public abstract class TripleSourceBase implements TripleSource {
 				return;
 			case ASK:
 				monitorRemoteRequest();
-				boolean hasResults = false;
+				boolean hasResults;
 				try (RepositoryConnection _conn = conn) {
 					BooleanQuery bQuery = _conn.prepareBooleanQuery(QueryLanguage.SPARQL, preparedQuery, baseURI);
 					applyBindings(bQuery, queryBindings);
@@ -142,9 +143,9 @@ public abstract class TripleSourceBase implements TripleSource {
 			if (filterExpr != null) {
 				if (bindings.size() > 0) {
 					res = new FilteringInsertBindingsIteration(filterExpr, bindings, res,
-							this.strategy);
+							queryInfo.getStrategy());
 				} else {
-					res = new FilteringIteration(filterExpr, res, this.strategy);
+					res = new FilteringIteration(filterExpr, res, queryInfo.getStrategy());
 				}
 				if (!res.hasNext()) {
 					Iterations.closeCloseable(res);
@@ -156,7 +157,7 @@ public abstract class TripleSourceBase implements TripleSource {
 				res = new InsertBindingsIteration(res, bindings);
 			}
 
-			resultHolder.set(new ConsumingIteration(res));
+			resultHolder.set(new ConsumingIteration(res, federationContext.getConfig().getConsumingIterationMax()));
 
 		});
 	}
@@ -279,8 +280,8 @@ public abstract class TripleSourceBase implements TripleSource {
 	 * @param <T>
 	 * @see TripleSourceBase#withConnection(ConnectionOperation)
 	 */
-	protected static interface ConnectionOperation<T> {
-		public void perform(RepositoryConnection conn, ResultHolder<T> resultHolder);
+	protected interface ConnectionOperation<T> {
+		void perform(RepositoryConnection conn, ResultHolder<T> resultHolder);
 	}
 
 	/**

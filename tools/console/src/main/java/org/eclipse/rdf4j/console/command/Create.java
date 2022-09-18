@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.console.command;
 
@@ -16,6 +19,7 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -30,7 +34,6 @@ import java.util.stream.Stream;
 import org.eclipse.rdf4j.common.io.IOUtil;
 import org.eclipse.rdf4j.console.ConsoleIO;
 import org.eclipse.rdf4j.console.ConsoleState;
-import org.eclipse.rdf4j.console.LockRemover;
 import org.eclipse.rdf4j.console.Util;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
@@ -58,7 +61,7 @@ import org.jline.reader.UserInterruptException;
 public class Create extends ConsoleCommand {
 	private static final String TEMPLATES_SUBDIR = "templates";
 	private static final String FILE_EXT = ".ttl";
-	private File templatesDir;
+	private final File templatesDir;
 
 	@Override
 	public String getName() {
@@ -174,7 +177,7 @@ public class Create extends ConsoleCommand {
 			if (templateStream != null) {
 				String template;
 				try {
-					template = IOUtil.readString(new InputStreamReader(templateStream, "UTF-8"));
+					template = IOUtil.readString(new InputStreamReader(templateStream, StandardCharsets.UTF_8));
 				} finally {
 					templateStream.close();
 				}
@@ -214,12 +217,8 @@ public class Create extends ConsoleCommand {
 							this.state.getManager().addRepositoryConfig(repConfig);
 							writeInfo("Repository created");
 						} catch (RepositoryReadOnlyException e) {
-							if (LockRemover.tryToRemoveLock(this.state.getManager().getSystemRepository(), consoleIO)) {
-								this.state.getManager().addRepositoryConfig(repConfig);
-								writeInfo("Repository created");
-							} else {
-								writeError("Failed to create repository", e);
-							}
+							this.state.getManager().addRepositoryConfig(repConfig);
+							writeInfo("Repository created");
 						}
 					} else {
 						writeln("Create aborted");

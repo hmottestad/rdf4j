@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.federated.algebra;
 
@@ -28,7 +31,7 @@ import com.google.common.collect.Lists;
  * sent as is to the single relevant source. In this case no materialization and in-memory handling through FedX is
  * done, if a {@link TupleQueryResultHandler} is supplied.
  * </p>
- * 
+ *
  * @author Andreas Schwarte
  *
  */
@@ -63,7 +66,7 @@ public class PassThroughTupleExpr extends AbstractQueryModelNode implements FedX
 	}
 
 	/**
-	 * 
+	 *
 	 * @return if the query result has already been passed through to the supplied {@link TupleQueryResultHandler}
 	 */
 	public boolean isPassedThrough() {

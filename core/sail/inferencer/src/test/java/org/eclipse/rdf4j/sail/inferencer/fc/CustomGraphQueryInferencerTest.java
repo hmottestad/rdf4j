@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.inferencer.fc;
 
@@ -31,6 +34,7 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.sail.NotifyingSail;
 import org.eclipse.rdf4j.sail.SailException;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,6 +47,11 @@ public abstract class CustomGraphQueryInferencerTest {
 	@BeforeClass
 	public static void setUpClass() throws Exception {
 		System.setProperty("org.eclipse.rdf4j.repository.debug", "true");
+	}
+
+	@AfterClass
+	public static void afterClass() throws Exception {
+		System.setProperty("org.eclipse.rdf4j.repository.debug", "false");
 	}
 
 	protected static class Expectation {
@@ -68,27 +77,25 @@ public abstract class CustomGraphQueryInferencerTest {
 	public static final Collection<Object[]> parameters() {
 		Expectation predExpect = new Expectation(8, 2, 0, 2, 0);
 		return Arrays.asList(new Object[][] { { PREDICATE, predExpect, QueryLanguage.SPARQL },
-				{ "resource", new Expectation(4, 2, 2, 0, 2), QueryLanguage.SPARQL },
-				{ "predicate-serql", predExpect, QueryLanguage.SERQL } });
+				{ "resource", new Expectation(4, 2, 2, 0, 2), QueryLanguage.SPARQL } }
+		);
 	}
 
 	private String initial;
 
 	private String delete;
 
-	private String resourceFolder;
+	private final String resourceFolder;
 
-	private Expectation testData;
+	private final Expectation testData;
 
-	private QueryLanguage language;
+	private final QueryLanguage language;
 
 	protected void runTest(final CustomGraphQueryInferencer inferencer) throws RepositoryException, RDFParseException,
 			IOException, MalformedQueryException, UpdateExecutionException {
 		// Initialize
 		Repository sail = new SailRepository(inferencer);
-		sail.initialize();
-		RepositoryConnection connection = sail.getConnection();
-		try {
+		try (RepositoryConnection connection = sail.getConnection()) {
 			connection.begin();
 			connection.clear();
 			connection.add(new StringReader(initial), BASE, RDFFormat.TURTLE);
@@ -124,8 +131,6 @@ public abstract class CustomGraphQueryInferencerTest {
 			// in order to properly clear out any inferred statements.
 			connection.clear();
 			connection.commit();
-		} finally {
-			connection.close();
 		}
 		sail.shutDown();
 	}

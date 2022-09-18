@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.federated.optimizer;
 
@@ -220,6 +223,7 @@ public class SourceSelection {
 					throw new OptimizationException("Source selection has run into a timeout");
 				}
 			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
 				log.debug("Error during source selection. Thread got interrupted.");
 				errors.add(e);
 			}
@@ -314,10 +318,10 @@ public class SourceSelection {
 		}
 
 		@Override
-		public CloseableIteration<BindingSet, QueryEvaluationException> performTask() throws Exception {
+		protected CloseableIteration<BindingSet, QueryEvaluationException> performTaskInternal() throws Exception {
 			try {
 				TripleSource t = endpoint.getTripleSource();
-				boolean hasResults = false;
+				boolean hasResults;
 				hasResults = t.hasStatements(stmt, EmptyBindingSet.getInstance(), queryInfo, queryInfo.getDataset());
 
 				SourceSelection sourceSelection = control.sourceSelection;

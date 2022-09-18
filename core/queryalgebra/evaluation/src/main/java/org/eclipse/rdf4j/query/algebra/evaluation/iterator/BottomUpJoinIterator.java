@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.algebra.evaluation.iterator;
 
@@ -12,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.rdf4j.common.iteration.CloseableIteration;
 import org.eclipse.rdf4j.common.iteration.LookAheadIteration;
@@ -39,7 +43,7 @@ public class BottomUpJoinIterator extends LookAheadIteration<BindingSet, QueryEv
 
 	private final CloseableIteration<BindingSet, QueryEvaluationException> leftIter;
 
-	private volatile CloseableIteration<BindingSet, QueryEvaluationException> rightIter;
+	private final CloseableIteration<BindingSet, QueryEvaluationException> rightIter;
 
 	private List<BindingSet> scanList;
 
@@ -47,7 +51,7 @@ public class BottomUpJoinIterator extends LookAheadIteration<BindingSet, QueryEv
 
 	private Map<BindingSet, List<BindingSet>> hashTable;
 
-	private Set<String> joinAttributes;
+	private final Set<String> joinAttributes;
 
 	private BindingSet currentScanElem;
 
@@ -62,8 +66,12 @@ public class BottomUpJoinIterator extends LookAheadIteration<BindingSet, QueryEv
 		leftIter = strategy.evaluate(join.getLeftArg(), bindings);
 		rightIter = strategy.evaluate(join.getRightArg(), bindings);
 
-		joinAttributes = join.getLeftArg().getBindingNames();
-		joinAttributes.retainAll(join.getRightArg().getBindingNames());
+		Set<String> rightBindingNames = join.getRightArg().getBindingNames();
+		joinAttributes = join.getLeftArg()
+				.getBindingNames()
+				.stream()
+				.filter(rightBindingNames::contains)
+				.collect(Collectors.toSet());
 
 		hashTable = null;
 	}
@@ -183,7 +191,7 @@ public class BottomUpJoinIterator extends LookAheadIteration<BindingSet, QueryEv
 			add(rightArgResults, rightIter.next());
 		}
 
-		List<BindingSet> smallestResult = null;
+		List<BindingSet> smallestResult;
 
 		if (leftIter.hasNext()) { // leftArg is the greater relation
 			smallestResult = rightArgResults;
@@ -199,7 +207,7 @@ public class BottomUpJoinIterator extends LookAheadIteration<BindingSet, QueryEv
 		for (BindingSet b : smallestResult) {
 			BindingSet hashKey = calcKey(b, joinAttributes);
 
-			List<BindingSet> hashValue = null;
+			List<BindingSet> hashValue;
 			if (hashTable.containsKey(hashKey)) {
 				hashValue = hashTable.get(hashKey);
 			} else {

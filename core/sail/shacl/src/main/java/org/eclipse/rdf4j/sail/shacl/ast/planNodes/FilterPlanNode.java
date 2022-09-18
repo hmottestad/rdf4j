@@ -1,17 +1,21 @@
 /*******************************************************************************
- * .Copyright (c) 2020 Eclipse RDF4J contributors.
+ * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 
 package org.eclipse.rdf4j.sail.shacl.ast.planNodes;
 
+import java.util.Objects;
+
 import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.rdf4j.common.iteration.CloseableIteration;
 import org.eclipse.rdf4j.sail.SailException;
-import org.eclipse.rdf4j.sail.shacl.GlobalValidationExecutionLogging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +37,7 @@ public abstract class FilterPlanNode implements MultiStreamPlanNode, PlanNode {
 	abstract boolean checkTuple(ValidationTuple t);
 
 	public FilterPlanNode(PlanNode parent) {
-		parent = PlanNodeHelper.handleSorting(this, parent);
-		this.parent = parent;
+		this.parent = PlanNodeHelper.handleSorting(this, parent);
 	}
 
 	public PlanNode getTrueNode(Class<? extends PushablePlanNode> type) {
@@ -73,7 +76,7 @@ public abstract class FilterPlanNode implements MultiStreamPlanNode, PlanNode {
 
 	private CloseableIteration<ValidationTuple, SailException> iteratorInternal() {
 
-		return new CloseableIteration<ValidationTuple, SailException>() {
+		return new CloseableIteration<>() {
 
 			CloseableIteration<? extends ValidationTuple, SailException> parentIterator;
 
@@ -95,21 +98,20 @@ public abstract class FilterPlanNode implements MultiStreamPlanNode, PlanNode {
 						if (trueNode != null) {
 							trueNode.push(temp);
 						} else {
-							if (GlobalValidationExecutionLogging.loggingEnabled) {
+							if (validationExecutionLogger.isEnabled()) {
 								validationExecutionLogger.log(FilterPlanNode.this.depth(),
 										FilterPlanNode.this.getClass().getSimpleName() + ":IgnoredAsTrue.next()", temp,
-										FilterPlanNode.this, getId());
+										FilterPlanNode.this, getId(), null);
 							}
 						}
 					} else {
 						if (falseNode != null) {
 							falseNode.push(temp);
 						} else {
-							if (GlobalValidationExecutionLogging.loggingEnabled) {
+							if (validationExecutionLogger.isEnabled()) {
 								validationExecutionLogger.log(FilterPlanNode.this.depth(),
 										FilterPlanNode.this.getClass().getSimpleName() + ":IgnoredAsFalse.next()", temp,
-										FilterPlanNode.this,
-										getId());
+										FilterPlanNode.this, getId(), null);
 							}
 						}
 					}
@@ -149,8 +151,9 @@ public abstract class FilterPlanNode implements MultiStreamPlanNode, PlanNode {
 
 			@Override
 			public void remove() throws SailException {
-
+				throw new UnsupportedOperationException();
 			}
+
 		};
 	}
 
@@ -233,4 +236,22 @@ public abstract class FilterPlanNode implements MultiStreamPlanNode, PlanNode {
 	public boolean requiresSorted() {
 		return false;
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		FilterPlanNode that = (FilterPlanNode) o;
+		return parent.equals(that.parent);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(parent);
+	}
+
 }

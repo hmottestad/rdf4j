@@ -1,15 +1,19 @@
-/******************************************************************************* 
- * Copyright (c) 2020 Eclipse RDF4J contributors. 
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Distribution License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/org/documents/edl-v10.php. 
+/*******************************************************************************
+ * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Distribution License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.model.util;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalAmount;
 import java.util.Date;
 import java.util.Objects;
 
@@ -24,6 +28,7 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Triple;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.base.CoreDatatype;
 import org.eclipse.rdf4j.model.impl.SimpleNamespace;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
@@ -35,18 +40,18 @@ import org.eclipse.rdf4j.model.vocabulary.XSD;
  * {@link Triple}) without having to create a {@link ValueFactory} first.
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * import static org.eclipse.rdf4j.model.util.Values.iri;
- * 
- * ... 
+ *
+ * ...
  * IRI foo = iri("http://example.org/foo");
  * </pre>
  * <p>
- * 
+ *
  * @author Jeen Broekstra
  * @since 3.5.0
- * 
+ *
  * @see Statements
  */
 public class Values {
@@ -66,11 +71,11 @@ public class Values {
 
 	/**
 	 * Create a new {@link IRI} using the supplied iri string
-	 * 
+	 *
 	 * @param iri a string representing a valid (absolute) iri
-	 * 
+	 *
 	 * @return an {@link IRI} object for the supplied iri string.
-	 * 
+	 *
 	 * @throws NullPointerException     if the suppplied iri is <code>null</code>
 	 * @throws IllegalArgumentException if the supplied iri string can not be parsed as a legal IRI.
 	 */
@@ -80,12 +85,12 @@ public class Values {
 
 	/**
 	 * Create a new {@link IRI} using the supplied iri string
-	 * 
+	 *
 	 * @param vf  the {@link ValueFactory} to use for creation of the IRI.
 	 * @param iri a string representing a valid (absolute) iri
-	 * 
+	 *
 	 * @return an {@link IRI} object for the supplied iri string.
-	 * 
+	 *
 	 * @throws NullPointerException     if any of the input parameters is <code>null</code>
 	 * @throws IllegalArgumentException if the supplied iri string can not be parsed as a legal IRI by the supplied
 	 *                                  {@link ValueFactory} .
@@ -96,12 +101,12 @@ public class Values {
 
 	/**
 	 * Create a new {@link IRI} using the supplied namespace name and local name
-	 * 
+	 *
 	 * @param namespace the IRI's namespace name
 	 * @param localName the IRI's local name
-	 * 
+	 *
 	 * @return an {@link IRI} object for the supplied IRI namespace name and localName.
-	 * 
+	 *
 	 * @throws NullPointerException     if any of the input parameters is <code>null</code>
 	 * @throws IllegalArgumentException if the supplied iri string can not be parsed as a legal IRI.
 	 */
@@ -111,12 +116,12 @@ public class Values {
 
 	/**
 	 * Create a new {@link IRI} using the supplied {@link Namespace} and local name
-	 * 
+	 *
 	 * @param namespace the IRI's {@link Namespace}
 	 * @param localName the IRI's local name
-	 * 
+	 *
 	 * @return an {@link IRI} object for the supplied IRI namespace and localName.
-	 * 
+	 *
 	 * @throws NullPointerException     if any of the input parameters is <code>null</code>
 	 * @throws IllegalArgumentException if the supplied iri string can not be parsed as a legal IRI.
 	 * @since 3.6.0
@@ -127,7 +132,7 @@ public class Values {
 
 	/**
 	 * Create a new {@link IRI} from a supplied prefixed name, using the supplied {@link Namespace namespaces}
-	 * 
+	 *
 	 * @param namespaces   the Namespaces from which to find the correct namespace to map the prefixed name to
 	 * @param prefixedName a prefixed name that is a shorthand for a full iri, using syntax form
 	 *                     <code>prefix:localName</code>. For example, <code>rdf:type</code> is a prefixed name where
@@ -135,9 +140,9 @@ public class Values {
 	 *                     this expands to the full namespace name
 	 *                     <code>http://www.w3.org/1999/02/22-rdf-syntax-ns#</code>, leading to a full IRI
 	 *                     <code>http://www.w3.org/1999/02/22-rdf-syntax-ns#type</code>.
-	 * 
+	 *
 	 * @return an {@link IRI} object for the supplied IRI namespace and localName.
-	 * 
+	 *
 	 * @throws NullPointerException     if any of the input parameters is <code>null</code>
 	 * @throws IllegalArgumentException if the supplied prefixed name can not be transformed to a legal IRI.
 	 * @since 3.6.0
@@ -158,13 +163,13 @@ public class Values {
 
 	/**
 	 * Create a new {@link IRI} using the supplied namespace and local name
-	 * 
+	 *
 	 * @param vf        the {@link ValueFactory} to use for creation of the IRI.
 	 * @param namespace the IRI's namespace
 	 * @param localName the IRI's local name
-	 * 
+	 *
 	 * @return an {@link IRI} object for the supplied IRI namespace and localName.
-	 * 
+	 *
 	 * @throws NullPointerException     if any of the input parameters is <code>null</code>
 	 * @throws IllegalArgumentException if the supplied iri string can not be parsed as a legal IRI by the supplied
 	 *                                  {@link ValueFactory}
@@ -178,7 +183,7 @@ public class Values {
 
 	/**
 	 * Creates a new {@link BNode}
-	 * 
+	 *
 	 * @return a new {@link BNode}
 	 */
 	public static BNode bnode() {
@@ -187,11 +192,11 @@ public class Values {
 
 	/**
 	 * Creates a new {@link BNode}
-	 * 
+	 *
 	 * @param vf the {@link ValueFactory} to use for creation of the {@link BNode}
-	 * 
+	 *
 	 * @return a new {@link BNode}
-	 * 
+	 *
 	 * @throws NullPointerException if any of the input parameters is <code>null</code>
 	 */
 	public static BNode bnode(ValueFactory vf) {
@@ -200,11 +205,11 @@ public class Values {
 
 	/**
 	 * Creates a new {@link BNode} with the supplied node identifier.
-	 * 
+	 *
 	 * @param nodeId the node identifier
-	 * 
+	 *
 	 * @return a new {@link BNode}
-	 * 
+	 *
 	 * @throws NullPointerException     if the supplied node identifier is <code>null</code>.
 	 * @throws IllegalArgumentException if the supplied node identifier is not valid
 	 */
@@ -214,12 +219,12 @@ public class Values {
 
 	/**
 	 * Creates a new {@link BNode} with the supplied node identifier.
-	 * 
+	 *
 	 * @param vf     the {@link ValueFactory} to use for creation of the {@link BNode}
 	 * @param nodeId the node identifier
-	 * 
+	 *
 	 * @return a new {@link BNode}
-	 * 
+	 *
 	 * @throws NullPointerException     if any of the input parameters is <code>null</code>
 	 * @throws IllegalArgumentException if the supplied node identifier is not valid
 	 */
@@ -231,11 +236,11 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied lexical value.
-	 * 
+	 *
 	 * @param lexicalValue the lexical value for the literal
-	 * 
+	 *
 	 * @return a new {@link Literal} of type {@link XSD#STRING}
-	 * 
+	 *
 	 * @throws NullPointerException if the supplied lexical value is <code>null</code>.
 	 */
 	public static Literal literal(String lexicalValue) {
@@ -247,9 +252,9 @@ public class Values {
 	 *
 	 * @param vf           the {@link ValueFactory} to use for creation of the {@link Literal}
 	 * @param lexicalValue the lexical value for the literal
-	 * 
+	 *
 	 * @return a new {@link Literal} of type {@link XSD#STRING}
-	 * 
+	 *
 	 * @throws NullPointerException if any of the input parameters is <code>null</code>
 	 */
 	public static Literal literal(ValueFactory vf, String lexicalValue) {
@@ -258,12 +263,12 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied lexical value.
-	 * 
+	 *
 	 * @param lexicalValue the lexical value for the literal
 	 * @param languageTag  the language tag for the literal.
-	 * 
+	 *
 	 * @return a new {@link Literal} of type {@link RDF#LANGSTRING}
-	 * 
+	 *
 	 * @throws NullPointerException if the supplied lexical value or language tag is <code>null</code>.
 	 */
 	public static Literal literal(String lexicalValue, String languageTag) {
@@ -276,9 +281,9 @@ public class Values {
 	 * @param vf           the {@link ValueFactory} to use for creation of the {@link Literal}
 	 * @param lexicalValue the lexical value for the literal
 	 * @param languageTag  the language tag for the literal.
-	 * 
+	 *
 	 * @return a new {@link Literal} of type {@link RDF#LANGSTRING}
-	 * 
+	 *
 	 * @throws NullPointerException if any of the input parameters is <code>null</code>
 	 */
 	public static Literal literal(ValueFactory vf, String lexicalValue, String languageTag) {
@@ -288,12 +293,12 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied lexical value and datatype.
-	 * 
+	 *
 	 * @param lexicalValue the lexical value for the literal
-	 * @param datatype     the datatype URI
-	 * 
+	 * @param datatype     the datatype IRI
+	 *
 	 * @return a new {@link Literal} with the supplied lexical value and datatype
-	 * 
+	 *
 	 * @throws NullPointerException     if the supplied lexical value or datatype is <code>null</code>.
 	 * @throws IllegalArgumentException if the supplied lexical value is not valid for the given datatype
 	 */
@@ -303,13 +308,28 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied lexical value and datatype.
-	 * 
+	 *
+	 * @param lexicalValue the lexical value for the literal
+	 * @param datatype     the CoreDatatype
+	 *
+	 * @return a new {@link Literal} with the supplied lexical value and datatype
+	 *
+	 * @throws NullPointerException     if the supplied lexical value or datatype is <code>null</code>.
+	 * @throws IllegalArgumentException if the supplied lexical value is not valid for the given datatype
+	 */
+	public static Literal literal(String lexicalValue, CoreDatatype datatype) throws IllegalArgumentException {
+		return literal(VALUE_FACTORY, lexicalValue, datatype);
+	}
+
+	/**
+	 * Creates a new {@link Literal} with the supplied lexical value and datatype.
+	 *
 	 * @param vf           the {@link ValueFactory} to use for creation of the {@link Literal}
 	 * @param lexicalValue the lexical value for the literal
-	 * @param datatype     the datatype URI
-	 * 
+	 * @param datatype     the datatype IRI
+	 *
 	 * @return a new {@link Literal} with the supplied lexical value and datatype
-	 * 
+	 *
 	 * @throws NullPointerException     if any of the input parameters is <code>null</code>.
 	 * @throws IllegalArgumentException if the supplied lexical value is not valid for the given datatype
 	 */
@@ -319,10 +339,28 @@ public class Values {
 	}
 
 	/**
+	 * Creates a new {@link Literal} with the supplied lexical value and datatype.
+	 *
+	 * @param vf           the {@link ValueFactory} to use for creation of the {@link Literal}
+	 * @param lexicalValue the lexical value for the literal
+	 * @param datatype     the CoreDatatype
+	 *
+	 * @return a new {@link Literal} with the supplied lexical value and datatype
+	 *
+	 * @throws NullPointerException     if any of the input parameters is <code>null</code>.
+	 * @throws IllegalArgumentException if the supplied lexical value is not valid for the given datatype
+	 */
+	public static Literal literal(ValueFactory vf, String lexicalValue, CoreDatatype datatype)
+			throws IllegalArgumentException {
+		return vf.createLiteral(Objects.requireNonNull(lexicalValue, "lexicalValue may not be null"),
+				Objects.requireNonNull(datatype, "datatype may not be null"));
+	}
+
+	/**
 	 * Creates a new {@link Literal} with the supplied boolean value
-	 * 
+	 *
 	 * @param booleanValue a boolean value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#BOOLEAN} with the supplied value
 	 */
 	public static Literal literal(boolean booleanValue) {
@@ -331,12 +369,12 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied boolean value
-	 * 
+	 *
 	 * @param vf           the {@link ValueFactory} to use for creation of the {@link Literal}
 	 * @param booleanValue a boolean value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#BOOLEAN} with the supplied value
-	 * 
+	 *
 	 * @throws NullPointerException if any of the input parameters is <code>null</code>.
 	 */
 	public static Literal literal(ValueFactory vf, boolean booleanValue) {
@@ -345,9 +383,9 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied byte value
-	 * 
+	 *
 	 * @param byteValue a byte value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#BYTE} with the supplied value
 	 */
 	public static Literal literal(byte byteValue) {
@@ -356,12 +394,12 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied byte value
-	 * 
+	 *
 	 * @param vf        the {@link ValueFactory} to use for creation of the {@link Literal}
 	 * @param byteValue a byte value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#BYTE} with the supplied value
-	 * 
+	 *
 	 * @throws NullPointerException if any of the input parameters is <code>null</code>.
 	 */
 	public static Literal literal(ValueFactory vf, byte byteValue) {
@@ -370,9 +408,9 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied short value
-	 * 
+	 *
 	 * @param shortValue a short value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#SHORT} with the supplied value
 	 */
 	public static Literal literal(short shortValue) {
@@ -381,12 +419,12 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied short value
-	 * 
+	 *
 	 * @param vf         the {@link ValueFactory} to use for creation of the {@link Literal}
 	 * @param shortValue a short value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#SHORT} with the supplied value
-	 * 
+	 *
 	 * @throws NullPointerException if any of the input parameters is <code>null</code>.
 	 */
 	public static Literal literal(ValueFactory vf, short shortValue) {
@@ -395,9 +433,9 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied int value
-	 * 
+	 *
 	 * @param intValue an int value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#INT} with the supplied value
 	 */
 	public static Literal literal(int intValue) {
@@ -406,12 +444,12 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied int value
-	 * 
+	 *
 	 * @param vf       the {@link ValueFactory} to use for creation of the {@link Literal}
 	 * @param intValue an int value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#INT} with the supplied value
-	 * 
+	 *
 	 * @throws NullPointerException if any of the input parameters is <code>null</code>.
 	 */
 	public static Literal literal(ValueFactory vf, int intValue) {
@@ -420,9 +458,9 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied long value
-	 * 
+	 *
 	 * @param longValue a long value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#LONG} with the supplied value
 	 */
 	public static Literal literal(long longValue) {
@@ -431,12 +469,12 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied long value
-	 * 
+	 *
 	 * @param vf        the {@link ValueFactory} to use for creation of the {@link Literal}
 	 * @param longValue a long value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#LONG} with the supplied value
-	 * 
+	 *
 	 * @throws NullPointerException if any of the input parameters is <code>null</code>.
 	 */
 	public static Literal literal(ValueFactory vf, long longValue) {
@@ -445,9 +483,9 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied float value
-	 * 
+	 *
 	 * @param floatValue a float value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#FLOAT} with the supplied value
 	 */
 	public static Literal literal(float floatValue) {
@@ -456,12 +494,12 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied float value
-	 * 
+	 *
 	 * @param vf         the {@link ValueFactory} to use for creation of the {@link Literal}
 	 * @param floatValue a float value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#FLOAT} with the supplied value
-	 * 
+	 *
 	 * @throws NullPointerException if any of the input parameters is <code>null</code>.
 	 */
 	public static Literal literal(ValueFactory vf, float floatValue) {
@@ -470,9 +508,9 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied double value
-	 * 
+	 *
 	 * @param doubleValue a double value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#DOUBLE} with the supplied value
 	 */
 	public static Literal literal(double doubleValue) {
@@ -481,12 +519,12 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied double value
-	 * 
+	 *
 	 * @param vf          the {@link ValueFactory} to use for creation of the {@link Literal}
 	 * @param doubleValue a double value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#DOUBLE} with the supplied value
-	 * 
+	 *
 	 * @throws NullPointerException if any of the input parameters is <code>null</code>.
 	 */
 	public static Literal literal(ValueFactory vf, double doubleValue) {
@@ -495,11 +533,11 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied {@link BigDecimal} value
-	 * 
+	 *
 	 * @param bigDecimal a {@link BigDecimal} value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#DECIMAL} with the supplied value
-	 * 
+	 *
 	 * @throws NullPointerException if the supplied bigDecimal is <code>null</code>.
 	 */
 	public static Literal literal(BigDecimal bigDecimal) {
@@ -508,12 +546,12 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied {@link BigDecimal} value
-	 * 
+	 *
 	 * @param vf         the {@link ValueFactory} to use for creation of the {@link Literal}
 	 * @param bigDecimal a {@link BigDecimal} value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#DECIMAL} with the supplied value
-	 * 
+	 *
 	 * @throws NullPointerException if any of the input parameters is <code>null</code>.
 	 */
 	public static Literal literal(ValueFactory vf, BigDecimal bigDecimal) {
@@ -522,11 +560,11 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied {@link BigInteger} value
-	 * 
+	 *
 	 * @param bigInteger a {@link BigInteger} value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#INTEGER} with the supplied value
-	 * 
+	 *
 	 * @throws NullPointerException if the supplied bigInteger is <code>null</code>.
 	 */
 	public static Literal literal(BigInteger bigInteger) {
@@ -535,12 +573,12 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied {@link BigInteger} value
-	 * 
+	 *
 	 * @param vf         the {@link ValueFactory} to use for creation of the {@link Literal}
 	 * @param bigInteger a {@link BigInteger} value
-	 * 
+	 *
 	 * @return a {@link Literal} of type {@link XSD#INTEGER} with the supplied value
-	 * 
+	 *
 	 * @throws NullPointerException if any of the input parameters is <code>null</code>.
 	 */
 	public static Literal literal(ValueFactory vf, BigInteger bigInteger) {
@@ -549,12 +587,12 @@ public class Values {
 
 	/**
 	 * Creates a new {@link Literal} with the supplied {@link TemporalAccessor} value
-	 * 
+	 *
 	 * @param value a {@link TemporalAccessor} value.
-	 * 
+	 *
 	 * @return a {@link Literal} with the supplied calendar value and the appropriate {@link XSD} date/time datatype for
 	 *         the specific value.
-	 * 
+	 *
 	 * @throws NullPointerException     if the supplied {@link TemporalAccessor} value is <code>null</code>.
 	 * @throws IllegalArgumentException if value cannot be represented by an XML Schema date/time datatype
 	 */
@@ -567,10 +605,10 @@ public class Values {
 	 *
 	 * @param vf    the {@link ValueFactory} to use for creation of the {@link Literal}
 	 * @param value a {@link TemporalAccessor} value.
-	 * 
+	 *
 	 * @return a {@link Literal} with the supplied calendar value and the appropriate {@link XSD} date/time datatype for
 	 *         the specific value.
-	 * 
+	 *
 	 * @throws NullPointerException     if any of the input parameters is <code>null</code>..
 	 * @throws IllegalArgumentException if value cannot be represented by an XML Schema date/time datatype
 	 */
@@ -587,9 +625,9 @@ public class Values {
 	 * {@link Short}, {@link XMLGregorianCalendar } , {@link TemporalAccessor} and {@link Date}.
 	 *
 	 * @param object an object to be converted to a typed literal.
-	 * 
+	 *
 	 * @return a typed literal representation of the supplied object.
-	 * 
+	 *
 	 * @throws NullPointerException if the input parameter is <code>null</code>..
 	 */
 	public static Literal literal(Object object) {
@@ -600,17 +638,18 @@ public class Values {
 	 * Creates a new typed {@link Literal} out of the supplied object, mapping the runtime type of the object to the
 	 * appropriate {@link XSD} datatype.
 	 * <p>
-	 * Recognized types are {@link Boolean}, {@link Byte}, {@link Double}, {@link Float}, {@link Integer}, {@link Long},
-	 * {@link Short}, {@link XMLGregorianCalendar } , {@link TemporalAccessor} and {@link Date}.
+	 * Recognized types are {@link Boolean}, {@link Byte}, {@link Double}, {@link Float}, {@link BigDecimal},
+	 * {@link Integer}, {@link BigInteger}, {@link Long}, {@link Short}, {@link XMLGregorianCalendar},
+	 * {@link TemporalAccessor}, {@link TemporalAmpount} and {@link Date}.
 	 *
 	 * @param object            an object to be converted to a typed literal.
 	 * @param failOnUnknownType If no mapping is available and <code>failOnUnknownType</code> is <code>false</code> the
 	 *                          method returns a literal with the string representation of the supplied object as the
 	 *                          value, and {@link XSD#STRING} as the datatype. If set to <code>true</code> the method
 	 *                          throws an {@link IllegalArgumentException} if no mapping available.
-	 * 
+	 *
 	 * @return a typed literal representation of the supplied object.
-	 * 
+	 *
 	 * @throws NullPointerException if the input parameter is <code>null</code>..
 	 */
 	public static Literal literal(Object object, boolean failOnUnknownType) {
@@ -630,9 +669,9 @@ public class Values {
 	 *                          method returns a literal with the string representation of the supplied object as the
 	 *                          value, and {@link XSD#STRING} as the datatype. If set to <code>true</code> the method
 	 *                          throws an {@link IllegalArgumentException} if no mapping available.
-	 * 
+	 *
 	 * @return a typed literal representation of the supplied object.
-	 * 
+	 *
 	 * @throws NullPointerException     if any of the input parameters is <code>null</code>.
 	 * @throws IllegalArgumentException if <code>failOnUnknownType</code> is set to <code>true</code> and the runtime
 	 *                                  type of the supplied object could not be mapped.
@@ -644,14 +683,14 @@ public class Values {
 	/* triple factory methods */
 
 	/**
-	 * Creates a new {@link Triple RDF* embedded triple} with the supplied subject, predicate, and object.
+	 * Creates a new {@link Triple RDF-star embedded triple} with the supplied subject, predicate, and object.
 	 *
 	 * @param subject   the Triple subject
 	 * @param predicate the Triple predicate
 	 * @param object    the Triple object
-	 * 
+	 *
 	 * @return a {@link Triple} with the supplied subject, predicate, and object.
-	 * 
+	 *
 	 * @throws NullPointerException if any of the supplied input parameters is <code>null</code>.
 	 */
 	public static Triple triple(Resource subject, IRI predicate, Value object) {
@@ -659,15 +698,15 @@ public class Values {
 	}
 
 	/**
-	 * Creates a new {@link Triple RDF* embedded triple} with the supplied subject, predicate, and object.
-	 * 
+	 * Creates a new {@link Triple RDF-star embedded triple} with the supplied subject, predicate, and object.
+	 *
 	 * @param vf        the {@link ValueFactory} to use for creation of the {@link Triple}
 	 * @param subject   the Triple subject
 	 * @param predicate the Triple predicate
 	 * @param object    the Triple object
-	 * 
+	 *
 	 * @return a {@link Triple} with the supplied subject, predicate, and object.
-	 * 
+	 *
 	 * @throws NullPointerException if any of the supplied input parameters is <code>null</code>.
 	 */
 	public static Triple triple(ValueFactory vf, Resource subject, IRI predicate, Value object) {
@@ -679,13 +718,13 @@ public class Values {
 	}
 
 	/**
-	 * Creates a new {@link Triple RDF* embedded triple} using the subject, predicate and object from the supplied
+	 * Creates a new {@link Triple RDF-star embedded triple} using the subject, predicate and object from the supplied
 	 * {@link Statement}.
 	 *
 	 * @param statement the {@link Statement} from which to construct a {@link Triple}
-	 * 
+	 *
 	 * @return a {@link Triple} with the same subject, predicate, and object as the supplied Statement.
-	 * 
+	 *
 	 * @throws NullPointerException if statement is <code>null</code>.
 	 */
 	public static Triple triple(Statement statement) {
@@ -694,14 +733,14 @@ public class Values {
 	}
 
 	/**
-	 * Creates a new {@link Triple RDF* embedded triple} using the subject, predicate and object from the supplied
+	 * Creates a new {@link Triple RDF-star embedded triple} using the subject, predicate and object from the supplied
 	 * {@link Statement}.
-	 * 
+	 *
 	 * @param vf        the {@link ValueFactory} to use for creation of the {@link Triple}
 	 * @param statement the {@link Statement} from which to construct a {@link Triple}
-	 * 
+	 *
 	 * @return a {@link Triple} with the same subject, predicate, and object as the supplied Statement.
-	 * 
+	 *
 	 * @throws NullPointerException if any of the supplied input parameters is <code>null</code>.
 	 */
 	public static Triple triple(ValueFactory vf, Statement statement) {
@@ -711,7 +750,7 @@ public class Values {
 
 	/**
 	 * Create a new {@link Namespace} object.
-	 * 
+	 *
 	 * @param prefix the prefix associated with the namespace
 	 * @param name   the namespace name (typically an IRI) for the namespace.
 	 * @return a {@link Namespace} object.
@@ -723,7 +762,7 @@ public class Values {
 
 	/**
 	 * Get a {@link ValueFactory}.
-	 * 
+	 *
 	 * @return a {@link ValueFactory}.
 	 */
 	public static ValueFactory getValueFactory() {
@@ -755,32 +794,38 @@ public class Values {
 		Objects.requireNonNull(object, "object may not be null");
 
 		if (object instanceof Boolean) {
-			return valueFactory.createLiteral(((Boolean) object).booleanValue());
+			return valueFactory.createLiteral((Boolean) object);
 		} else if (object instanceof Byte) {
-			return valueFactory.createLiteral(((Byte) object).byteValue());
+			return valueFactory.createLiteral((Byte) object);
 		} else if (object instanceof Double) {
-			return valueFactory.createLiteral(((Double) object).doubleValue());
+			return valueFactory.createLiteral((Double) object);
 		} else if (object instanceof Float) {
-			return valueFactory.createLiteral(((Float) object).floatValue());
+			return valueFactory.createLiteral((Float) object);
+		} else if (object instanceof BigDecimal) {
+			return valueFactory.createLiteral((BigDecimal) object);
 		} else if (object instanceof Integer) {
-			return valueFactory.createLiteral(((Integer) object).intValue());
+			return valueFactory.createLiteral((Integer) object);
+		} else if (object instanceof BigInteger) {
+			return valueFactory.createLiteral((BigInteger) object);
 		} else if (object instanceof Long) {
-			return valueFactory.createLiteral(((Long) object).longValue());
+			return valueFactory.createLiteral((Long) object);
 		} else if (object instanceof Short) {
-			return valueFactory.createLiteral(((Short) object).shortValue());
+			return valueFactory.createLiteral((Short) object);
 		} else if (object instanceof XMLGregorianCalendar) {
 			return valueFactory.createLiteral((XMLGregorianCalendar) object);
 		} else if (object instanceof Date) {
 			return valueFactory.createLiteral((Date) object);
 		} else if (object instanceof TemporalAccessor) {
 			return valueFactory.createLiteral((TemporalAccessor) object);
+		} else if (object instanceof TemporalAmount) {
+			return valueFactory.createLiteral((TemporalAmount) object);
 		} else if (object instanceof String) {
-			return valueFactory.createLiteral(object.toString(), XSD.STRING);
+			return valueFactory.createLiteral(object.toString(), CoreDatatype.XSD.STRING);
 		} else {
 			if (throwExceptionOnFailure) {
 				throw new IllegalArgumentException("Unrecognized object type: " + object);
 			}
-			return valueFactory.createLiteral(object.toString(), XSD.STRING);
+			return valueFactory.createLiteral(object.toString(), CoreDatatype.XSD.STRING);
 		}
 	}
 }

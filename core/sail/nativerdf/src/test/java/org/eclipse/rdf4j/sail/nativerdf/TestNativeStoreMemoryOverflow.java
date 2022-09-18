@@ -1,31 +1,35 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.nativerdf;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
 import java.io.IOException;
 
-import org.eclipse.rdf4j.IsolationLevel;
-import org.eclipse.rdf4j.IsolationLevels;
-import org.eclipse.rdf4j.common.io.FileUtil;
+import org.eclipse.rdf4j.common.iteration.CloseableIteration;
 import org.eclipse.rdf4j.common.iteration.Iteration;
 import org.eclipse.rdf4j.common.iteration.Iterations;
+import org.eclipse.rdf4j.common.transaction.IsolationLevel;
+import org.eclipse.rdf4j.common.transaction.IsolationLevels;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.URI;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -41,7 +45,8 @@ public class TestNativeStoreMemoryOverflow {
 		return IsolationLevels.values();
 	}
 
-	private File dataDir;
+	@Rule
+	public final TemporaryFolder tmpDir = new TemporaryFolder();
 
 	private Repository testRepository;
 
@@ -49,7 +54,7 @@ public class TestNativeStoreMemoryOverflow {
 
 	private RepositoryConnection testCon2;
 
-	private IsolationLevel level;
+	private final IsolationLevel level;
 
 	public TestNativeStoreMemoryOverflow(IsolationLevel level) {
 		this.level = level;
@@ -58,7 +63,6 @@ public class TestNativeStoreMemoryOverflow {
 	@Before
 	public void setUp() throws Exception {
 		testRepository = createRepository();
-		testRepository.initialize();
 
 		testCon = testRepository.getConnection();
 		testCon.setIsolationLevel(level);
@@ -70,19 +74,14 @@ public class TestNativeStoreMemoryOverflow {
 	}
 
 	private Repository createRepository() throws IOException {
-		dataDir = FileUtil.createTempDir("nativestore");
-		return new SailRepository(new NativeStore(dataDir, "spoc"));
+		return new SailRepository(new NativeStore(tmpDir.getRoot(), "spoc"));
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		try {
-			testCon2.close();
-			testCon.close();
-			testRepository.shutDown();
-		} finally {
-			FileUtil.deleteDir(dataDir);
-		}
+		testCon2.close();
+		testCon.close();
+		testRepository.shutDown();
 	}
 
 	@Test
@@ -90,11 +89,11 @@ public class TestNativeStoreMemoryOverflow {
 		int size = 10000; // this should really be bigger
 		// load a lot of triples in two different contexts
 		testCon.begin();
-		final ValueFactory vf = testCon.getValueFactory();
-		URI context1 = vf.createURI("http://my.context.1");
-		URI context2 = vf.createURI("http://my.context.2");
-		final URI predicate = vf.createURI("http://my.predicate");
-		final URI object = vf.createURI("http://my.object");
+		ValueFactory vf = testCon.getValueFactory();
+		IRI context1 = vf.createIRI("http://my.context.1");
+		IRI context2 = vf.createIRI("http://my.context.2");
+		IRI predicate = vf.createIRI("http://my.predicate");
+		IRI object = vf.createIRI("http://my.object");
 
 		testCon.add(new DynamicIteration(size, predicate, object, vf), context1);
 		testCon.add(new DynamicIteration(size, predicate, object, vf), context2);
@@ -109,19 +108,19 @@ public class TestNativeStoreMemoryOverflow {
 		testCon.close();
 	}
 
-	private static final class DynamicIteration implements Iteration<Statement, RuntimeException> {
+	private static final class DynamicIteration implements CloseableIteration<Statement, RuntimeException> {
 
 		private final int size;
 
-		private final URI predicate;
+		private final IRI predicate;
 
-		private final URI object;
+		private final IRI object;
 
 		private final ValueFactory vf;
 
 		private int i;
 
-		private DynamicIteration(int size, URI predicate, URI object, ValueFactory vf) {
+		private DynamicIteration(int size, IRI predicate, IRI object, ValueFactory vf) {
 			this.size = size;
 			this.predicate = predicate;
 			this.object = object;
@@ -135,12 +134,17 @@ public class TestNativeStoreMemoryOverflow {
 
 		@Override
 		public Statement next() throws RuntimeException {
-			return vf.createStatement(vf.createURI("http://my.subject" + i++), predicate, object);
+			return vf.createStatement(vf.createIRI("http://my.subject" + i++), predicate, object);
 		}
 
 		@Override
 		public void remove() throws RuntimeException {
 			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void close() throws RuntimeException {
+			// no-op
 		}
 	}
 }

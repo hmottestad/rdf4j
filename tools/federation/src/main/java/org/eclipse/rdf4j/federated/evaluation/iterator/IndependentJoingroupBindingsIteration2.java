@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.federated.evaluation.iterator;
 
@@ -86,7 +89,7 @@ public class IndependentJoingroupBindingsIteration2 extends LookAheadIteration<B
 //			int tmp = b.getName().indexOf("_");
 //			String pattern = b.getName().substring(tmp+1);
 //			String split[] = pattern.split("_");
-//			
+//
 //			int bIndex = Integer.parseInt(split[0]);
 //			int bindingsIdx = Integer.parseInt(split[1]);
 //			BindingInfo bInfo = new BindingInfo(b.getName().substring(0, tmp), bindingsIdx, b.getValue());
@@ -117,6 +120,15 @@ public class IndependentJoingroupBindingsIteration2 extends LookAheadIteration<B
 		}
 
 		return res;
+	}
+
+	@Override
+	protected void handleClose() throws QueryEvaluationException {
+		try {
+			super.handleClose();
+		} finally {
+			iter.close();
+		}
 	}
 
 	protected class BindingInfo {

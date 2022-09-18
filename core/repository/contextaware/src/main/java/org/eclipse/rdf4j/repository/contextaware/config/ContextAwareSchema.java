@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.repository.contextaware.config;
 
@@ -17,37 +20,37 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 public class ContextAwareSchema {
 
 	/**
-	 * The ContextAwareRepository schema namespace ( <tt>http://www.openrdf.org/config/repository/contextaware#</tt>).
+	 * The ContextAwareRepository schema namespace ( <var>http://www.openrdf.org/config/repository/contextaware#</var>).
 	 */
 	public static final String NAMESPACE = "http://www.openrdf.org/config/repository/contextaware#";
 
-	/** <tt>http://www.openrdf.org/config/repository/contextaware#includeInferred</tt> */
+	/** <var>http://www.openrdf.org/config/repository/contextaware#includeInferred</var> */
 	public final static IRI INCLUDE_INFERRED;
 
-	/** <tt>http://www.openrdf.org/config/repository/contextaware#maxQueryTime</tt> */
+	/** <var>http://www.openrdf.org/config/repository/contextaware#maxQueryTime</var> */
 	public final static IRI MAX_QUERY_TIME;
 
-	/** <tt>http://www.openrdf.org/config/repository/contextaware#queryLanguage</tt> */
+	/** <var>http://www.openrdf.org/config/repository/contextaware#queryLanguage</var> */
 	public final static IRI QUERY_LANGUAGE;
 
-	/** <tt>http://www.openrdf.org/config/repository/contextaware#base</tt> */
+	/** <var>http://www.openrdf.org/config/repository/contextaware#base</var> */
 	public final static IRI BASE_URI;
 
-	/** <tt>http://www.openrdf.org/config/repository/contextaware#readContext</tt> */
+	/** <var>http://www.openrdf.org/config/repository/contextaware#readContext</var> */
 	public final static IRI READ_CONTEXT;
 
-	/** <tt>http://www.openrdf.org/config/repository/contextaware#addContext</tt> */
+	/** <var>http://www.openrdf.org/config/repository/contextaware#addContext</var> */
 	@Deprecated
 	public final static IRI ADD_CONTEXT;
 
-	/** <tt>http://www.openrdf.org/config/repository/contextaware#removeContext</tt> */
+	/** <var>http://www.openrdf.org/config/repository/contextaware#removeContext</var> */
 	public final static IRI REMOVE_CONTEXT;
 
-	/** <tt>http://www.openrdf.org/config/repository/contextaware#archiveContext</tt> */
+	/** <var>http://www.openrdf.org/config/repository/contextaware#archiveContext</var> */
 	@Deprecated
 	public final static IRI ARCHIVE_CONTEXT;
 
-	/** <tt>http://www.openrdf.org/config/repository/contextaware#insertContext</tt> */
+	/** <var>http://www.openrdf.org/config/repository/contextaware#insertContext</var> */
 	public final static IRI INSERT_CONTEXT;
 
 	static {

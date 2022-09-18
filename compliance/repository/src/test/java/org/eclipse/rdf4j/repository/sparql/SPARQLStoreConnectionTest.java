@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.repository.sparql;
 
@@ -15,9 +18,9 @@ import static org.junit.Assert.assertTrue;
 import java.lang.reflect.Field;
 import java.util.List;
 
-import org.eclipse.rdf4j.IsolationLevel;
-import org.eclipse.rdf4j.RDF4JException;
+import org.eclipse.rdf4j.common.exception.RDF4JException;
 import org.eclipse.rdf4j.common.iteration.Iterations;
+import org.eclipse.rdf4j.common.transaction.IsolationLevel;
 import org.eclipse.rdf4j.http.protocol.Protocol;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
@@ -30,8 +33,8 @@ import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.query.Update;
 import org.eclipse.rdf4j.repository.Repository;
-import org.eclipse.rdf4j.repository.RepositoryConnectionTest;
 import org.eclipse.rdf4j.repository.http.HTTPMemServer;
+import org.eclipse.rdf4j.testsuite.repository.RepositoryConnectionTest;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -129,12 +132,6 @@ public class SPARQLStoreConnectionTest extends RepositoryConnectionTest {
 	@Ignore("relies on pending updates being visible in own connection")
 	public void testEmptyCommit() throws Exception {
 		System.err.println("temporarily disabled testEmptyCommit() for SPARQLRepository");
-	}
-
-	@Override
-	@Ignore("SeRQL language not supported on SPARQL endpoints")
-	public void testPrepareSeRQLQuery() throws Exception {
-		System.err.println("disabled testPrepareSeRQLQuery() for SPARQLRepository");
 	}
 
 	@Override
@@ -447,4 +444,17 @@ public class SPARQLStoreConnectionTest extends RepositoryConnectionTest {
 
 	}
 
+	@Test
+	@Ignore("relies on pending updates being visible in own connection")
+	@Override
+	public void testRemoveStatementsFromContextSingleTransaction() throws Exception {
+		super.testRemoveStatementsFromContextSingleTransaction();
+	}
+
+	@Test
+	@Ignore("relies on pending updates being visible in own connection")
+	@Override
+	public void testClearStatementsFromContextSingleTransaction() throws Exception {
+		super.testClearStatementsFromContextSingleTransaction();
+	}
 }

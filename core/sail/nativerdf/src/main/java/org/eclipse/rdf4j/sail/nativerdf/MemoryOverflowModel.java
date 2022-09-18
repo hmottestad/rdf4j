@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.nativerdf;
 
@@ -11,12 +14,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 
-import org.eclipse.rdf4j.common.io.FileUtil;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Namespace;
@@ -24,9 +27,9 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.AbstractModel;
-import org.eclipse.rdf4j.model.impl.ContextStatementImpl;
 import org.eclipse.rdf4j.model.impl.FilteredModel;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.sail.SailException;
 import org.eclipse.rdf4j.sail.base.SailStore;
 import org.slf4j.Logger;
@@ -47,22 +50,28 @@ abstract class MemoryOverflowModel extends AbstractModel {
 
 	private static final int LARGE_BLOCK = 10000;
 
+	// To reduce the chance of OOM we will always overflow once we get close to running out of memory even if we think
+	// we have space for one more block. The limit is currently set at 32 MB
+	private static final int MIN_AVAILABLE_MEM_BEFORE_OVERFLOWING = 32 * 1024 * 1024;
+
 	final Logger logger = LoggerFactory.getLogger(MemoryOverflowModel.class);
 
-	private LinkedHashModel memory;
+	private volatile LinkedHashModel memory;
 
-	transient File dataDir;
+	private transient File dataDir;
 
-	transient SailStore store;
+	private transient SailStore store;
 
-	transient SailSourceModel disk;
+	private transient volatile SailSourceModel disk;
 
 	private long baseline = 0;
 
 	private long maxBlockSize = 0;
 
+	SimpleValueFactory vf = SimpleValueFactory.getInstance();
+
 	public MemoryOverflowModel() {
-		memory = new LinkedHashModel();
+		memory = new LinkedHashModel(LARGE_BLOCK);
 	}
 
 	public MemoryOverflowModel(Model model) {
@@ -76,7 +85,7 @@ abstract class MemoryOverflowModel extends AbstractModel {
 	}
 
 	public MemoryOverflowModel(Set<Namespace> namespaces) {
-		memory = new LinkedHashModel(namespaces);
+		memory = new LinkedHashModel(namespaces, LARGE_BLOCK);
 	}
 
 	@Override
@@ -185,11 +194,15 @@ abstract class MemoryOverflowModel extends AbstractModel {
 
 	protected abstract SailStore createSailStore(File dataDir) throws IOException, SailException;
 
-	synchronized Model getDelegate() {
-		if (disk == null) {
+	private Model getDelegate() {
+		LinkedHashModel memory = this.memory;
+		if (memory != null) {
 			return memory;
+		} else {
+			synchronized (this) {
+				return disk;
+			}
 		}
-		return disk;
 	}
 
 	private void writeObject(ObjectOutputStream s) throws IOException {
@@ -204,7 +217,7 @@ abstract class MemoryOverflowModel extends AbstractModel {
 			IRI pred = st.getPredicate();
 			Value obj = st.getObject();
 			Resource ctx = st.getContext();
-			s.writeObject(new ContextStatementImpl(subj, pred, obj, ctx));
+			s.writeObject(vf.createStatement(subj, pred, obj, ctx));
 		}
 	}
 
@@ -243,9 +256,11 @@ abstract class MemoryOverflowModel extends AbstractModel {
 					if (blockSize > maxBlockSize) {
 						maxBlockSize = blockSize;
 					}
+
 					// Sync if either the estimated size of the next block is larger than remaining memory, or
-					// if less than 10% of the heap is still free (this last condition to avoid GC overhead limit)
-					if (freeToAllocateMemory < Math.min(0.1 * maxMemory, maxBlockSize)) {
+					// if less than 15% of the heap is still free (this last condition to avoid GC overhead limit)
+					if (freeToAllocateMemory < MIN_AVAILABLE_MEM_BEFORE_OVERFLOWING ||
+							freeToAllocateMemory < Math.min(0.15 * maxMemory, maxBlockSize)) {
 						logger.debug("syncing at {} triples. max block size: {}", size, maxBlockSize);
 						overflowToDisk();
 					}
@@ -257,51 +272,19 @@ abstract class MemoryOverflowModel extends AbstractModel {
 
 	private synchronized void overflowToDisk() {
 		try {
+			LinkedHashModel memory = this.memory;
+			this.memory = null;
+
 			assert disk == null;
-			dataDir = createTempDir("model");
+			dataDir = Files.createTempDirectory("model").toFile();
 			logger.debug("memory overflow using temp directory {}", dataDir);
 			store = createSailStore(dataDir);
-			disk = new SailSourceModel(store) {
-
-				@Override
-				protected void finalize() throws Throwable {
-					logger.debug("finalizing {}", dataDir);
-					if (disk == this) {
-						try {
-							store.close();
-						} catch (SailException e) {
-							logger.error(e.toString(), e);
-						} finally {
-							FileUtil.deltree(dataDir);
-							dataDir = null;
-							store = null;
-							disk = null;
-						}
-					}
-					super.finalize();
-				}
-			};
+			disk = new SailSourceModel(store);
 			disk.addAll(memory);
-			memory = new LinkedHashModel(memory.getNamespaces());
 			logger.debug("overflow synced to disk");
 		} catch (IOException | SailException e) {
 			String path = dataDir != null ? dataDir.getAbsolutePath() : "(unknown)";
 			logger.error("Error while writing to overflow directory " + path, e);
 		}
 	}
-
-	private File createTempDir(String name) throws IOException {
-		String tmpDirStr = System.getProperty("java.io.tmpdir");
-		if (tmpDirStr != null) {
-			File tmpDir = new File(tmpDirStr);
-			if (!tmpDir.exists()) {
-				tmpDir.mkdirs();
-			}
-		}
-		File tmp = File.createTempFile(name, "");
-		tmp.delete();
-		tmp.mkdir();
-		return tmp;
-	}
-
 }

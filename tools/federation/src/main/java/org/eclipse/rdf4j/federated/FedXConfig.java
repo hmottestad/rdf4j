@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.federated;
 
@@ -11,15 +14,11 @@ import java.util.Optional;
 
 import org.eclipse.rdf4j.federated.cache.SourceSelectionCache;
 import org.eclipse.rdf4j.federated.cache.SourceSelectionMemoryCache;
-import org.eclipse.rdf4j.federated.evaluation.FederationEvalStrategy;
-import org.eclipse.rdf4j.federated.evaluation.SailFederationEvalStrategy;
-import org.eclipse.rdf4j.federated.evaluation.SparqlFederationEvalStrategy;
 import org.eclipse.rdf4j.federated.evaluation.concurrent.ControlledWorkerScheduler;
 import org.eclipse.rdf4j.federated.evaluation.concurrent.TaskWrapper;
+import org.eclipse.rdf4j.federated.evaluation.iterator.ConsumingIteration;
 import org.eclipse.rdf4j.federated.monitoring.QueryLog;
 import org.eclipse.rdf4j.federated.monitoring.QueryPlanLog;
-import org.eclipse.rdf4j.federated.write.DefaultWriteStrategyFactory;
-import org.eclipse.rdf4j.federated.write.WriteStrategyFactory;
 import org.eclipse.rdf4j.query.Operation;
 import org.eclipse.rdf4j.query.Query;
 
@@ -58,15 +57,11 @@ public class FedXConfig {
 
 	private String sourceSelectionCacheSpec = null;
 
-	private Class<? extends FederationEvalStrategy> sailEvaluationStrategy = SailFederationEvalStrategy.class;
-
-	private Class<? extends FederationEvalStrategy> sparqlEvaluationStrategy = SparqlFederationEvalStrategy.class;
-
-	private Class<? extends WriteStrategyFactory> writeStrategyFactory = DefaultWriteStrategyFactory.class;
-
 	private TaskWrapper taskWrapper = null;
 
 	private String prefixDeclarations = null;
+
+	private int consumingIterationMax = 1000;
 
 	/* factory like setters */
 
@@ -97,47 +92,6 @@ public class FedXConfig {
 	 */
 	public FedXConfig withLogQueries(boolean flag) {
 		this.isLogQueries = flag;
-		return this;
-	}
-
-	/**
-	 * Set the {@link FederationEvalStrategy} for SPARQL federations. See {@link #getSPARQLEvaluationStrategy()}.
-	 *
-	 * <p>
-	 * Can only be set before federation initialization.
-	 * </p>
-	 *
-	 * @param sparqlEvaluationStrategy
-	 * @return the current config
-	 */
-	public FedXConfig withSparqlEvaluationStrategy(Class<? extends FederationEvalStrategy> sparqlEvaluationStrategy) {
-		this.sparqlEvaluationStrategy = sparqlEvaluationStrategy;
-		return this;
-	}
-
-	/**
-	 * Set the {@link FederationEvalStrategy} for SAIL federations. See {@link #getSailEvaluationStrategy()}.
-	 *
-	 * <p>
-	 * Can only be set before federation initialization.
-	 * </p>
-	 *
-	 * @param sailEvaluationStrategy
-	 * @return the current config
-	 */
-	public FedXConfig withSailEvaluationStrategy(Class<? extends FederationEvalStrategy> sailEvaluationStrategy) {
-		this.sailEvaluationStrategy = sailEvaluationStrategy;
-		return this;
-	}
-
-	/**
-	 * Set the {@link WriteStrategyFactory} to be used.
-	 *
-	 * @param writeStrategyFactory
-	 * @return the current config
-	 */
-	public FedXConfig withWriteStrategyFactory(Class<? extends WriteStrategyFactory> writeStrategyFactory) {
-		this.writeStrategyFactory = writeStrategyFactory;
 		return this;
 	}
 
@@ -300,7 +254,7 @@ public class FedXConfig {
 	/**
 	 * Sets a {@link TaskWrapper} which may be used for wrapping any background {@link Runnable}s. If no such wrapper is
 	 * explicitly configured, the unmodified task is returned. See {@link TaskWrapper} for more information.
-	 * 
+	 *
 	 * @param taskWrapper the {@link TaskWrapper}
 	 * @return the current config
 	 * @see TaskWrapper
@@ -451,45 +405,6 @@ public class FedXConfig {
 	}
 
 	/**
-	 * Returns the class of the {@link FederationEvalStrategy} implementation that is used in the case of SAIL
-	 * implementations, e.g. for native stores.
-	 * <p>
-	 * Default {@link SailFederationEvalStrategy}
-	 * </p>
-	 *
-	 * @return the evaluation strategy class
-	 */
-	public Class<? extends FederationEvalStrategy> getSailEvaluationStrategy() {
-		return sailEvaluationStrategy;
-	}
-
-	/**
-	 * Returns the class of the {@link FederationEvalStrategy} implementation that is used in the case of SPARQL
-	 * implementations, e.g. SPARQL repository or remote repository.
-	 * <p>
-	 * Default {@link SparqlFederationEvalStrategy}
-	 * </p>
-	 *
-	 * @return the evaluation strategy class
-	 */
-	public Class<? extends FederationEvalStrategy> getSPARQLEvaluationStrategy() {
-		return sparqlEvaluationStrategy;
-	}
-
-	/**
-	 * Returns the class of the {@link WriteStrategyFactory} implementation.
-	 *
-	 * <p>
-	 * Default: {@link DefaultWriteStrategyFactory}
-	 * </p>
-	 *
-	 * @return the {@link WriteStrategyFactory} class
-	 */
-	public Class<? extends WriteStrategyFactory> getWriteStrategyFactory() {
-		return writeStrategyFactory;
-	}
-
-	/**
 	 * The debug mode for query plan. If enabled, the query execution plan is printed to stdout
 	 *
 	 * @return whether the query plan is printed to std out
@@ -501,10 +416,33 @@ public class FedXConfig {
 	/**
 	 * Returns a {@link TaskWrapper} which may be used for wrapping any background {@link Runnable}s. If no such wrapper
 	 * is explicitly configured, the unmodified task is returned. See {@link TaskWrapper} for more information.
-	 * 
+	 *
 	 * @return the {@link TaskWrapper}, an empty {@link Optional} if none is explicitly configured
 	 */
 	public Optional<TaskWrapper> getTaskWrapper() {
 		return Optional.ofNullable(taskWrapper);
+	}
+
+	/**
+	 * Set the max number of results to be consumed by {@link ConsumingIteration}. See
+	 * {@link #getConsumingIterationMax()}.
+	 *
+	 * <p>
+	 * Can only be set before federation initialization.
+	 * </p>
+	 *
+	 * @param max
+	 * @return the current config
+	 */
+	public FedXConfig withConsumingIterationMax(int max) {
+		this.consumingIterationMax = max;
+		return this;
+	}
+
+	/**
+	 * Returns the max number of results to be consumed by {@link ConsumingIteration}
+	 */
+	public int getConsumingIterationMax() {
+		return consumingIterationMax;
 	}
 }

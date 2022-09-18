@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 
 package org.eclipse.rdf4j.model.impl;
@@ -64,7 +67,7 @@ public class DynamicModelConcurrentModificationAndUpgradeTest {
 
 		Runnable addAll = () -> {
 			try {
-				model.addAll(new Collection<Statement>() {
+				model.addAll(new Collection<>() {
 					@Override
 					public int size() {
 						return statements.size();
@@ -82,7 +85,7 @@ public class DynamicModelConcurrentModificationAndUpgradeTest {
 
 					@Override
 					public Iterator<Statement> iterator() {
-						return new Iterator<Statement>() {
+						return new Iterator<>() {
 
 							final Iterator<Statement> iterator = statements.iterator();
 

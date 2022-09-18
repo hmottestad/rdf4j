@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.rio;
 
@@ -915,7 +918,7 @@ public abstract class AbstractParserHandlingTest {
 		testParser.parse(input, BASE_URI);
 
 		assertErrorListener(0, 0, 0);
-		assertModel(expectedModel); // isomorphic
+		// assertModel(expectedModel); // GH-2768 isomorphism is not maintained after skolemization
 		assertNotEquals(new HashSet<>(expectedModel), new HashSet<>(testStatements)); // blank nodes not preserved
 		assertTrue(Models.subjectBNodes(testStatements).isEmpty()); // skolemized
 	}
@@ -933,7 +936,7 @@ public abstract class AbstractParserHandlingTest {
 				vf.createIRI("urn:f"));
 		expectedModel.add(vf.createStatement(t3, vf.createIRI("urn:same"), t3));
 
-		// Default: formats with RDF* support handle it natively and non-RDF* use a compatibility encoding
+		// Default: formats with RDF-star support handle it natively and non-RDF-star use a compatibility encoding
 		InputStream input1 = serialize(expectedModel);
 		testParser.parse(input1, BASE_URI);
 		assertErrorListener(0, 0, 0);
@@ -942,8 +945,8 @@ public abstract class AbstractParserHandlingTest {
 		testListener.reset();
 		testStatements.clear();
 
-		// Turn off compatibility on parsing: formats with RDF* support will produce RDF* triples,
-		// non-RDF* formats will produce IRIs of the kind urn:rdf4j:triple:xxx
+		// Turn off compatibility on parsing: formats with RDF-star support will produce RDF-star triples,
+		// non-RDF-star formats will produce IRIs of the kind urn:rdf4j:triple:xxx
 		InputStream input2 = serialize(expectedModel);
 		testParser.getParserConfig().set(BasicParserSettings.PROCESS_ENCODED_RDF_STAR, false);
 		testParser.parse(input2, BASE_URI);
@@ -975,13 +978,13 @@ public abstract class AbstractParserHandlingTest {
 		assertEquals("Unexpected number of warnings", expectedWarnings, testListener.getWarnings().size());
 	}
 
-	private final Model getTestModel(String datatypeValue, IRI datatypeURI) {
+	private Model getTestModel(String datatypeValue, IRI datatypeURI) {
 		Model result = new LinkedHashModel();
 		result.add(vf.createStatement(vf.createBNode(), DC.DESCRIPTION, vf.createLiteral(datatypeValue, datatypeURI)));
 		return result;
 	}
 
-	private final Model getTestModel(String languageValue, String languageTag) {
+	private Model getTestModel(String languageValue, String languageTag) {
 		Model result = new LinkedHashModel();
 		result.add(vf.createStatement(vf.createBNode(), RDFS.COMMENT, vf.createLiteral(languageValue, languageTag)));
 		return result;

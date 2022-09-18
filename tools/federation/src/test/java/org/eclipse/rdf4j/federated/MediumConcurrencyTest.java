@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.federated;
 
@@ -15,13 +18,11 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class MediumConcurrencyTest extends SPARQLBaseTest {
@@ -40,9 +41,10 @@ public class MediumConcurrencyTest extends SPARQLBaseTest {
 	}
 
 	@AfterAll
-	public static void afterClass() {
+	public static void afterClass() throws InterruptedException {
 		if (executor != null) {
 			executor.shutdownNow();
+			executor.awaitTermination(30, TimeUnit.SECONDS);
 		}
 	}
 
@@ -71,43 +73,22 @@ public class MediumConcurrencyTest extends SPARQLBaseTest {
 			});
 			Assertions.assertEquals("OK", message);
 		} catch (Throwable t) {
-			futures.stream().forEach(future -> future.cancel(true));
+			futures.forEach(future -> future.cancel(true));
 			throw t;
 		}
 
 		log.info("Done");
 	}
 
-	@Test
-	@Disabled // just a test for showing the phaser
-	public void testPhaser() throws Exception {
-
-		final Phaser p1 = new Phaser(1);
-		final Random rand = new Random();
-
-		for (int i = 0; i < 10; i++) {
-			final int tid = i;
-			executor.submit(() -> {
-				p1.register();
-				try {
-					Thread.sleep(rand.nextInt(10) * 1000);
-				} catch (InterruptedException e) {
-					throw new RuntimeException(e);
-				}
-				System.out.println("Task " + tid + " done");
-				p1.arriveAndDeregister();
-			});
-		}
-		System.out.println("Waiting for tasks to finish");
-		p1.awaitAdvanceInterruptibly(p1.arrive(), 15, TimeUnit.SECONDS);
-		System.out.println("Done");
-	}
-
 	protected Future<String> submit(final String query, final int queryId) {
 		return executor.submit(() -> {
 			log.info("Executing query " + queryId + ": " + query);
-			execute("/tests/medium/" + query + ".rq", "/tests/medium/" + query + ".srx", false);
+			execute("/tests/medium/" + query + ".rq", "/tests/medium/" + query + ".srx", false, true);
+			// uncomment to simulate canceling case
+			// executeReadPartial("/tests/medium/" + query + ".rq");
+
 			return "Ok";
 		});
 	}
+
 }

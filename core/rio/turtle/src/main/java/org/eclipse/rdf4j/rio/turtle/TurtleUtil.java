@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.rio.turtle;
 
@@ -36,7 +39,7 @@ public class TurtleUtil {
 	 * serialization constraints of the Turtle format.
 	 *
 	 * @param uri The URI to split.
-	 * @return The index where the supplied URI can be split, or <tt>-1</tt> if the URI cannot be split.
+	 * @return The index where the supplied URI can be split, or <var>-1</var> if the URI cannot be split.
 	 */
 	public static int findURISplitIndex(String uri) {
 		int uriLength = uri.length();

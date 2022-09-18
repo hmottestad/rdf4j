@@ -46,8 +46,10 @@ is type `ex:Person`.
 
 ## How to load and update SHACL shapes
 
-The ShaclSail uses a reserved graph (`http://rdf4j.org/schema/rdf4j#SHACLShapeGraph`) for storing the SHACL shapes.
+By default, the ShaclSail uses a reserved graph (`http://rdf4j.org/schema/rdf4j#SHACLShapeGraph`) for storing the SHACL shapes.
 Utilize a normal connection to load your shapes into this graph. SPARQL is not supported.
+
+The [Shapes Graph](#shapes-graph) section explains how to store your shapes in a different named graph.  
 
 ```java
 ShaclSail shaclSail = new ShaclSail(new MemoryStore());
@@ -109,6 +111,7 @@ As of writing this documentation the following features are supported.
 - `sh:path`
 - `sh:inversePath`
 - `sh:property`
+- `sh:node`
 - `sh:or`
 - `sh:and`
 - `sh:not`
@@ -129,6 +132,10 @@ As of writing this documentation the following features are supported.
 - `sh:in`
 - `sh:deactivated`
 - `sh:hasValue`
+- `sh:qualifiedMaxCount`
+- `sh:qualifiedMinCount`
+- `sh:qualifiedValueShape`
+- 'sh:shapesGraph'
 - `dash:hasValueIn`
 - `sh:target` for use with DASH targets
 - `rsx:targetShape`
@@ -140,7 +147,7 @@ about the RSX features, see the [RSX section](#rsx---eclipse-rdf4j-shacl-extensi
 Implicit `sh:targetClass` is supported for nodes that are `rdfs:Class` and either of `sh:PropertyShape` or `sh:NodeShape`. Validation for all nodes,
 equivalent to `owl:Thing` or `rdfs:Resource` in an environment with a reasoner, can be enabled by setting `setUndefinedTargetValidatesAllSubjects(true)`.
 
-`sh:path` is limited to single predicate paths, eg. `ex:age` or a single inverse path. Sequence paths, alternative paths and the like are not supported.
+`sh:path` is limited to single predicate paths, e.g. `ex:age` or a single inverse path. Sequence paths, alternative paths and the like are not supported.
 
 Nested `sh:property` is not supported.
 
@@ -153,10 +160,9 @@ try {
     connection.commit();
 } catch (RepositoryException exception) {
     Throwable cause = exception.getCause();
-    if (cause instanceof ShaclSailValidationException) {
-        ValidationReport validationReport = ((ShaclSailValidationException) cause).getValidationReport();
-        Model validationReportModel = ((ShaclSailValidationException) cause).validationReportAsModel();
-        // use validationReport or validationReportModel to understand validation violations
+    if (cause instanceof ValidationException) {
+        Model validationReportModel = ((ValidationException) cause).validationReportAsModel();
+        // use validationReportModel to understand validation violations
 
         Rio.write(validationReportModel, System.out, RDFFormat.TURTLE);
     }
@@ -192,12 +198,12 @@ Limiting the size of the report can be useful to speed up validation and to redu
 
 Limitations can either be configured directly in the ShaclSail or through the configuration files.
 
- - `setValidationResultsLimitTotal(1000)` limits the total number of validation results per report to 1000.
+ - `setValidationResultsLimitTotal(1000)` limits the total number of validation results per report to 1000. (1 000 000 by default)
      - `<http://rdf4j.org/config/sail/shacl#validationResultsLimitTotal>`
- - `setValidationResultsLimitPerConstraint(10)` limits the number of validation results per constraint component to 10
+ - `setValidationResultsLimitPerConstraint(10)` limits the number of validation results per constraint component to 10. (1000 by default)
      - `<http://rdf4j.org/config/sail/shacl#validationResultsLimitPerConstraint>`
 
- Use -1 to remove a limit and 0 to validate but return an empty validation report. -1 is the default.
+ Use -1 to remove a limit and 0 to validate but return an empty validation report. 
 
  A truncated validation report will have `isTruncated()` return true and the model will have `rdf4j:truncated true`.
 
@@ -211,8 +217,8 @@ try {
     connection.commit();
 } catch (RepositoryException exception) {
     Throwable cause = exception.getCause();
-    if (cause instanceof ShaclSailValidationException) {
-        Model validationReportModel = ((ShaclSailValidationException) cause).validationReportAsModel();
+    if (cause instanceof ValidationException) {
+        Model validationReportModel = ((ValidationException) cause).validationReportAsModel();
 
         validationReportModel
             .filter(null, SHACL.SOURCE_SHAPE, null);
@@ -263,7 +269,7 @@ ex:pete ex:age "eighteen".
 
 Neither of these transactions will by themselves cause the validation to fail, but together they will.
 
-Typically in order to handle this scenario a user would need to use SERIALIZABLE transactions, which are slow and
+Typically, in order to handle this scenario a user would need to use SERIALIZABLE transactions, which are slow and
 prone to failure. The ShaclSail instead uses locking to run transactions one-after-the-other if the isolation level is set to
 SNAPSHOT. This is typically 2-4x faster than using SERIALIZABLE.
 
@@ -275,9 +281,7 @@ It is possible to disable this type of validation with `setSerializableValidatio
 The ShaclSail is built for performance. Each transaction is analyzed so that only the minimal set of shapes need to be
 validated, and for each of those shapes only the least amount of data is retrieved in order to perform the validation.
 
-Parallel validation further increases performance. This can be disabled with `setParallelValidation(false)`.
-
-The initial commit to an empty ShaclSail is further optimized if the underlying sail is a MemoryStore.
+Parallel validation further increases performance and is enabled by default. This can be disabled with `setParallelValidation(false)`.
 
 Some workloads will not fit in memory and need to be validated while stored on disk. This can be achieved by using a
 NativeStore and using the new transaction settings introduced in 3.3.0.
@@ -289,6 +293,13 @@ NativeStore and using the new transaction settings introduced in 3.3.0.
 Disabling validation for a transaction may leave your data in an invalid state. Running a transaction with bulk validation will force a full validation.
 This is a useful approach if you need to use multiple transactions to bulk load your data.
 
+As of 3.6.0 there are also a set of experimental transaction settings for hinting about performance aspects of the validation.
+- `ShaclSail.TransactionSettings.PerformanceHint.CacheEnabled`: Enable the cache that stores intermediate results so these only need to be computed once.
+- `ShaclSail.TransactionSettings.PerformanceHint.CacheDisabled`: Disable the cache.
+- `ShaclSail.TransactionSettings.PerformanceHint.ParallelValidation`: Run validation in parallel (multithreaded).
+- `ShaclSail.TransactionSettings.PerformanceHint.SerialValidation`:  Run validation in serial (single threaded).
+
+
 ```java
 ShaclSail shaclSail = new ShaclSail(new NativeStore(new File(...), "spoc,ospc,psoc"));
 SailRepository sailRepository = new SailRepository(shaclSail);
@@ -297,6 +308,14 @@ try (SailRepositoryConnection connection = sailRepository.getConnection()) {
 
 	connection.begin(IsolationLevels.NONE, ShaclSail.TransactionSettings.ValidationApproach.Bulk);
 
+//	You can enable parallel validation and the intermediate cache for better performance if you have sufficient memory 
+//	connection.begin(
+//		IsolationLevels.NONE, 
+//		ShaclSail.TransactionSettings.ValidationApproach.Bulk, 
+//		ShaclSail.TransactionSettings.PerformanceHint.CacheEnabled, 
+//		ShaclSail.TransactionSettings.PerformanceHint.ParallelValidation
+//	);	
+	
 	// load shapes
 	try (InputStream inputStream = new FileInputStream("shacl.ttl")) {
 		connection.add(inputStream, "", RDFFormat.TURTLE, RDF4J.SHACL_SHAPE_GRAPH);
@@ -322,9 +341,98 @@ try (SailRepositoryConnection connection = sailRepository.getConnection()) {
 sailRepository.shutDown();
 ```
 
+### Automatic bulk validation
+Large transactions will take up significant amounts of memory because the transactional validation needs to analyze the transactional 
+changes in order to decide what needs to be validated. Very large transactions could exceed the amount of memory available and cause the 
+JVM to crash.
+
+As of 4.0.0 transactions can automatically be switched to bulk validation if they exceed a set limit. 
+
+- `setTransactionalValidationLimit(1000)` will make transactions switch to bulk validation if the transaction size is more than 1000 statements. Default is 500 000.
+   - `<http://rdf4j.org/config/sail/shacl#transactionalValidationLimit>`
+
+Automatic bulk validation is not compatible with serializable validation.
+
 ## Reasoning
-By default the ShaclSail supports the simple rdfs:subClassOf reasoning required by the W3C recommendation. There is no
+By default, the ShaclSail supports the simple rdfs:subClassOf reasoning required by the W3C recommendation. There is no
 support for `sh:entailment`, however the entire reasoner can be disabled with `setRdfsSubClassReasoning(false)`.
+
+## Shapes graph
+
+When shapes are used to validate the contents of a database it makes sense to consider them part of the database schema and as such 
+keep them seperated from each other. This separation is achieved by storing shapes in a reserved graph 
+(`http://rdf4j.org/schema/rdf4j#SHACLShapeGraph`) which is hidden unless specifically named when loading or removing data.
+
+As of 4.0.0 the ShaclSail can be configured to load shapes from other graphs (both named graphs and the default graph).
+- `setShapesGraphs(Set.of(RDF4J.SHACL_SHAPE_GRAPH, Values.iri("http://example.org/myShapeGraph"))` will read shapes from both the normal reserved graph and the named graph `http://example.org/myShapeGraph`.
+    - `<http://rdf4j.org/config/sail/shacl#shapesGraph>`
+
+    
+Shapes stored in the reserved graph (`http://rdf4j.org/schema/rdf4j#SHACLShapeGraph`) are used to validate the union of all triples
+in the default graph and any other named graph. The ShaclSail relies on `sh:shapesGraph` statements to understand how shapes stored
+in other graphs should be used for validation.
+
+SHACL uses the term shapes graph to refer to an RDF graph where the shapes are defined, and the term data graph to refer to an RDF
+graph where the data to be validated is stored. Data graphs and shapes graphs are linked together using `sh:shapesGraph` statements
+which are used by the ShaclSail to decide which shapes should be used to validate which graphs.
+
+For security and performance the ShaclSail ignores `sh:shapesGraph` statements that are not in a graph that has been configured for 
+shapes, as explained above. This means that you can always trust data you load into your database to not tamper with your shapes or
+with which shapes are used for validation, as long as you limit which graphs your load the data into.
+
+### Example
+
+```trig
+ex:shapesGraph1 {
+    ex:PersonShape
+        a sh:NodeShape  ;
+        sh:targetClass ex:Person ;       
+}  
+
+ex:shapesGraph2 {
+    ex:PersonShape       
+        sh:property [
+            sh:path ex:age ;
+            sh:datatype xsd:integer ;
+        ] .
+
+    rdf4j:nil sh:shapesGraph ex:shapesGraph1, ex:shapesGraph2.         
+}
+
+ex:shapesGraph3 {
+    ex:PersonShape       
+        sh:property [
+            sh:path ex:age ;
+            sh:minCount 1;
+        ] .
+
+}
+```
+
+The above shapes will result in all the data in the default graph (unnamed graph) being validated against the shapes defined in the union
+of both `ex:shapesGraph1` and `ex:shapesGraph2`. The shape defined in `ex:shapesGraph3` is effectively ignored. The resource `rdf4j:nil` is used to refer to the default graph.
+
+The following data is valid.
+
+```trig
+{
+    ex:steve a ex:Person.
+    
+    ex:jane a ex:Person;
+        ex:age 40.
+}  
+```
+
+While the following data is invalid.
+
+
+```trig
+{    
+    ex:john a ex:Person;
+        ex:age "seventy two".
+}  
+```
+
 
 ## RSX - Eclipse RDF4J SHACL Extensions
 RDF4J has seen a need to develop its own extension the W3C SHACL Recommendation in order to support new
@@ -339,7 +447,7 @@ The RSX specification will be published soon together with the limited support f
 
 ## Logging and debugging
 
-By default there is no logging enabled in the ShaclSail. There are four methods for enabling logging:
+By default, there is no logging enabled in the ShaclSail. There are four methods for enabling logging:
 
 - `shaclSail.setLogValidationPlans(true);`
 - `shaclSail.setGlobalLogValidationExecution(true);`
@@ -360,7 +468,7 @@ The structure of this log and its contents may change in the future, without war
 
 ### Log validation execution
 
-The execution of the validation plan shows what data was requested during the exeuction and how that data was joined together and filtered.
+The execution of the validation plan shows what data was requested during the execution and how that data was joined together and filtered.
 
 Enabling this logging will enable it for all ShaclSails on all threads.
 
@@ -417,7 +525,7 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.eclipse.rdf4j.sail.shacl.ShaclSail;
-import org.eclipse.rdf4j.sail.shacl.ShaclSailValidationException;
+import org.eclipse.rdf4j.sail.shacl.ValidationException;
 import org.eclipse.rdf4j.sail.shacl.results.ValidationReport;
 import org.slf4j.LoggerFactory;
 
@@ -484,10 +592,8 @@ public class ShaclSampleCode {
                 connection.commit();
             } catch (RepositoryException exception) {
                 Throwable cause = exception.getCause();
-                if (cause instanceof ShaclSailValidationException) {
-                    ValidationReport validationReport = ((ShaclSailValidationException) cause).getValidationReport();
-                    Model validationReportModel = ((ShaclSailValidationException) cause).validationReportAsModel();
-                    // use validationReport or validationReportModel to understand validation violations
+                if (cause instanceof ValidationException) {
+                    Model validationReportModel = ((ValidationException) cause).validationReportAsModel();
 
                     Rio.write(validationReportModel, System.out, RDFFormat.TURTLE);
                 }

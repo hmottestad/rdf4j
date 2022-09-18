@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.workbench.commands;
 
@@ -11,7 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
+import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -62,7 +65,7 @@ public class AddServlet extends TransformationServlet {
 			TupleResultBuilder builder = getTupleResultBuilder(req, resp, resp.getOutputStream());
 			builder.transform(xslPath, "add.xsl");
 			builder.start("error-message", "baseURI", CONTEXT, "Content-Type");
-			builder.link(Arrays.asList(INFO));
+			builder.link(List.of(INFO));
 			String baseURI = req.getParameter("baseURI");
 			String context = req.getParameter(CONTEXT);
 			String contentType = req.getParameter("Content-Type");
@@ -77,7 +80,7 @@ public class AddServlet extends TransformationServlet {
 			throw new BadRequestException("No Content-Type provided");
 		}
 
-		RDFFormat format = null;
+		RDFFormat format;
 		if ("autodetect".equals(contentType)) {
 			format = Rio.getParserFormatForFileName(contentFileName)
 					.orElseThrow(() -> new BadRequestException(
@@ -100,7 +103,7 @@ public class AddServlet extends TransformationServlet {
 			throw new BadRequestException("No Content-Type provided");
 		}
 
-		RDFFormat format = null;
+		RDFFormat format;
 		if ("autodetect".equals(contentType)) {
 			format = Rio.getParserFormatForFileName(url.getFile())
 					.orElseThrow(() -> new BadRequestException(
@@ -125,7 +128,7 @@ public class AddServlet extends TransformationServlet {
 		// TupleResultBuilder builder = getTupleResultBuilder(req, resp);
 		builder.transform(xslPath, "add.xsl");
 		builder.start();
-		builder.link(Arrays.asList(INFO));
+		builder.link(List.of(INFO));
 		builder.end();
 	}
 

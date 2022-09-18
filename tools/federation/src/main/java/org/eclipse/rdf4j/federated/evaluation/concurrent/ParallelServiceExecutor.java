@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.federated.evaluation.concurrent;
 
@@ -93,7 +96,7 @@ public class ParallelServiceExecutor extends LookAheadIteration<BindingSet, Quer
 
 	@Override
 	public void done() {
-		; // no-op
+		// no-op
 	}
 
 	@Override
@@ -127,6 +130,7 @@ public class ParallelServiceExecutor extends LookAheadIteration<BindingSet, Quer
 					throw new QueryInterruptedException("Timeout during service evaluation");
 				}
 			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
 				log.debug("Error while evaluating service expression. Thread got interrupted.");
 				error = e;
 			}
@@ -155,8 +159,7 @@ public class ParallelServiceExecutor extends LookAheadIteration<BindingSet, Quer
 	private class ParallelServiceTask extends ParallelTaskBase<BindingSet> {
 
 		@Override
-		public CloseableIteration<BindingSet, QueryEvaluationException> performTask()
-				throws Exception {
+		protected CloseableIteration<BindingSet, QueryEvaluationException> performTaskInternal() throws Exception {
 
 			// Note: in order two avoid deadlocks we consume the SERVICE result.
 			// This is basically required to avoid processing background tuple

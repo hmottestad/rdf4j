@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.workbench.util;
 
@@ -16,6 +19,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,8 +43,6 @@ import org.eclipse.rdf4j.workbench.exceptions.BadRequestException;
  * Request wrapper used by {@link org.eclipse.rdf4j.workbench.base TransformationServlet}.
  */
 public class WorkbenchRequest extends HttpServletRequestWrapper {
-
-	private static final String UTF_8 = "UTF-8";
 
 	private Map<String, String> parameters;
 
@@ -117,7 +119,7 @@ public class WorkbenchRequest extends HttpServletRequestWrapper {
 
 	@Override
 	public String getParameter(String name) {
-		String result = null;
+		String result;
 		if (parameters != null && parameters.containsKey(name)) {
 			result = parameters.get(name);
 		} else {
@@ -293,8 +295,8 @@ public class WorkbenchRequest extends HttpServletRequestWrapper {
 		Map<String, String> parameters = new HashMap<>();
 		for (String param : qry.split("&")) {
 			int idx = param.indexOf('=');
-			String name = decode(param.substring(0, idx), UTF_8);
-			String value = decode(param.substring(idx + 1), UTF_8);
+			String name = decode(param.substring(0, idx), StandardCharsets.UTF_8);
+			String value = decode(param.substring(idx + 1), StandardCharsets.UTF_8);
 			parameters.put(name, value);
 		}
 		return parameters;

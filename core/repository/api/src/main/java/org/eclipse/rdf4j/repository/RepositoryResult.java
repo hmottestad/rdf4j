@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.repository;
 
@@ -18,12 +21,15 @@ import org.eclipse.rdf4j.common.iteration.DistinctIteration;
 import org.eclipse.rdf4j.common.iteration.Iteration;
 import org.eclipse.rdf4j.common.iteration.Iterations;
 import org.eclipse.rdf4j.common.iterator.CloseableIterationIterator;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
 
 /**
  * A RepositoryResult is a result collection of objects (for example {@link org.eclipse.rdf4j.model.Statement} ,
- * {@link org.eclipse.rdf4j.model.Namespace}, or {@link org.eclipse.rdf4j.model.Resource} objects) that can be iterated
- * over. It keeps an open connection to the backend for lazy retrieval of individual results. Additionally it has some
- * utility methods to fetch all results and add them to a collection.
+ * {@link org.eclipse.rdf4j.model.Namespace}, or {@link Resource} objects) that can be iterated over. It keeps an open
+ * connection to the backend for lazy retrieval of individual results. Additionally it has some utility methods to fetch
+ * all results and add them to a collection.
  * <p>
  * By default, a RepositoryResult is not necessarily a (mathematical) set: it may contain duplicate objects. Duplicate
  * filtering can be {@link #enableDuplicateFilter() switched on}, but this should not be used lightly as the filtering
@@ -32,8 +38,7 @@ import org.eclipse.rdf4j.common.iterator.CloseableIterationIterator;
  * A RepositoryResult needs to be {@link #close() closed} after use to free up any resources (open connections, read
  * locks, etc.) it has on the underlying repository.
  *
- * @see RepositoryConnection#getStatements(org.eclipse.rdf4j.model.Resource, org.eclipse.rdf4j.model.URI,
- *      org.eclipse.rdf4j.model.Value, boolean, org.eclipse.rdf4j.model.Resource[])
+ * @see RepositoryConnection#getStatements(Resource, IRI, Value, boolean, Resource[])
  * @see RepositoryConnection#getNamespaces()
  * @see RepositoryConnection#getContextIDs()
  * @author Jeen Broekstra
@@ -41,7 +46,7 @@ import org.eclipse.rdf4j.common.iterator.CloseableIterationIterator;
  */
 public class RepositoryResult<T> extends AbstractCloseableIteration<T, RepositoryException> implements Iterable<T> {
 
-	private volatile Iteration<? extends T, RepositoryException> wrappedIter;
+	private CloseableIteration<? extends T, RepositoryException> wrappedIter;
 
 	public RepositoryResult(CloseableIteration<? extends T, RepositoryException> iter) {
 		assert iter != null;

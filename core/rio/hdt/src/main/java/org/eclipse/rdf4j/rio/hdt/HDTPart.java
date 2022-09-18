@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.rio.hdt;
 
@@ -48,7 +51,7 @@ abstract class HDTPart {
 			return value;
 		}
 
-		private Type(byte value) {
+		Type(byte value) {
 			this.value = value;
 		}
 	}
@@ -227,7 +230,7 @@ abstract class HDTPart {
 	 * @throws IOException
 	 */
 	protected int getIntegerProperty(Map<String, String> props, String prop, String name) throws IOException {
-		int len = 0;
+		int len;
 
 		String str = props.getOrDefault(prop, "0");
 		try {

@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.shacl.config;
 
@@ -26,17 +29,11 @@ public class ShaclSailSchema {
 	/** <code>http://rdf4j.org/config/sail/shacl#parallelValidation</code> */
 	public final static IRI PARALLEL_VALIDATION = create("parallelValidation");
 
-	/** <code>http://rdf4j.org/config/sail/shacl#undefinedTargetValidatesAllSubjects</code> */
-	public final static IRI UNDEFINED_TARGET_VALIDATES_ALL_SUBJECTS = create("undefinedTargetValidatesAllSubjects");
-
 	/** <code>http://rdf4j.org/config/sail/shacl#logValidationPlans</code> */
 	public final static IRI LOG_VALIDATION_PLANS = create("logValidationPlans");
 
 	/** <code>http://rdf4j.org/config/sail/shacl#logValidationViolations</code> */
 	public final static IRI LOG_VALIDATION_VIOLATIONS = create("logValidationViolations");
-
-	/** <code>http://rdf4j.org/config/sail/shacl#ignoreNoShapesLoadedException</code> */
-	public final static IRI IGNORE_NO_SHAPES_LOADED_EXCEPTION = create("ignoreNoShapesLoadedException");
 
 	/** <code>http://rdf4j.org/config/sail/shacl#validationEnabled</code> */
 	public final static IRI VALIDATION_ENABLED = create("validationEnabled");
@@ -62,6 +59,9 @@ public class ShaclSailSchema {
 
 	public final static IRI VALIDATION_RESULTS_LIMIT_TOTAL = create("validationResultsLimitTotal");
 	public final static IRI VALIDATION_RESULTS_LIMIT_PER_CONSTRAINT = create("validationResultsLimitPerConstraint");
+	public final static IRI TRANSACTIONAL_VALIDATION_LIMIT = create("transactionalValidationLimit");
+
+	public final static IRI SHAPES_GRAPH = create("shapesGraph");
 
 	private static IRI create(String localName) {
 		return iri(NAMESPACE, localName);

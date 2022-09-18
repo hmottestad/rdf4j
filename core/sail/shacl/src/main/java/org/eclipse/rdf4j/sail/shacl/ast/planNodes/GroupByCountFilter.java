@@ -1,13 +1,17 @@
 /*******************************************************************************
- * .Copyright (c) 2020 Eclipse RDF4J contributors.
+ * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 
 package org.eclipse.rdf4j.sail.shacl.ast.planNodes;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 import org.apache.commons.text.StringEscapeUtils;
@@ -25,9 +29,7 @@ public class GroupByCountFilter implements PlanNode {
 	private ValidationExecutionLogger validationExecutionLogger;
 
 	public GroupByCountFilter(PlanNode parent, Function<Long, Boolean> filter) {
-		parent = PlanNodeHelper.handleSorting(this, parent);
-
-		this.parent = parent;
+		this.parent = PlanNodeHelper.handleSorting(this, parent);
 		this.filter = filter;
 	}
 
@@ -50,7 +52,7 @@ public class GroupByCountFilter implements PlanNode {
 						tempNext = parentIterator.next();
 					}
 
-					this.next = new ValidationTuple(tempNext);
+					this.next = tempNext;
 					long count = 0;
 
 					while (tempNext != null && tempNext.sameTargetAs(this.next)) {
@@ -75,19 +77,19 @@ public class GroupByCountFilter implements PlanNode {
 			}
 
 			@Override
-			public void close() throws SailException {
+			public void localClose() throws SailException {
 				parentIterator.close();
 			}
 
 			@Override
-			boolean localHasNext() throws SailException {
+			protected boolean localHasNext() throws SailException {
 				calculateNext();
 
 				return next != null;
 			}
 
 			@Override
-			ValidationTuple loggingNext() throws SailException {
+			protected ValidationTuple loggingNext() throws SailException {
 
 				calculateNext();
 
@@ -97,10 +99,6 @@ public class GroupByCountFilter implements PlanNode {
 				return temp;
 			}
 
-			@Override
-			public void remove() throws SailException {
-
-			}
 		};
 	}
 
@@ -145,5 +143,22 @@ public class GroupByCountFilter implements PlanNode {
 	@Override
 	public boolean requiresSorted() {
 		return true;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		GroupByCountFilter that = (GroupByCountFilter) o;
+		return filter.equals(that.filter) && parent.equals(that.parent);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(filter, parent);
 	}
 }

@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.repository.manager;
 
@@ -18,6 +21,7 @@ import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModelFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.repository.config.RepositoryConfig;
 import org.eclipse.rdf4j.repository.config.RepositoryConfigException;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,13 +57,24 @@ public class RepositoryManagerTest {
 			}
 
 			@Override
-			public Collection<RepositoryInfo> getAllRepositoryInfos(boolean skipSystemRepo) throws RepositoryException {
+			public Collection<RepositoryInfo> getAllRepositoryInfos() throws RepositoryException {
 				return null;
 			}
 
 			@Override
 			protected Repository createRepository(String id) throws RepositoryConfigException, RepositoryException {
 				return null;
+			}
+
+			@Override
+			public RepositoryConfig getRepositoryConfig(String repositoryID)
+					throws RepositoryConfigException, RepositoryException {
+				return null;
+			}
+
+			@Override
+			public void addRepositoryConfig(RepositoryConfig config)
+					throws RepositoryException, RepositoryConfigException {
 			}
 		};
 	}

@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.nativerdf;
 
@@ -18,8 +21,8 @@ import org.assertj.core.util.Files;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.sail.NotifyingSail;
-import org.eclipse.rdf4j.sail.RDFNotifyingStoreTest;
 import org.eclipse.rdf4j.sail.SailException;
+import org.eclipse.rdf4j.testsuite.sail.RDFNotifyingStoreTest;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -35,6 +38,7 @@ public class NativeStoreTest extends RDFNotifyingStoreTest {
 
 	@Rule
 	public TemporaryFolder tempDir = new TemporaryFolder();
+	private File dataDir;
 
 	/*---------*
 	 * Methods *
@@ -43,7 +47,8 @@ public class NativeStoreTest extends RDFNotifyingStoreTest {
 	@Override
 	protected NotifyingSail createSail() throws SailException {
 		try {
-			NotifyingSail sail = new NativeStore(tempDir.newFolder("nativestore"), "spoc,posc");
+			dataDir = tempDir.newFolder();
+			NotifyingSail sail = new NativeStore(dataDir, "spoc,posc");
 			sail.init();
 			return sail;
 		} catch (IOException e) {
@@ -75,7 +80,7 @@ public class NativeStoreTest extends RDFNotifyingStoreTest {
 		con.close();
 		sail.shutDown();
 
-		File contextFile = new File(tempDir.getRoot(), "/nativestore/contexts.dat");
+		File contextFile = new File(dataDir, "/contexts.dat");
 		Files.delete(contextFile);
 
 		sail.init();

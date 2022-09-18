@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.rio.hdt;
 
@@ -48,7 +51,7 @@ class HDTBitmap extends HDTPart {
 
 	@Override
 	protected void parse(InputStream is) throws IOException {
-		long bytes = 0L;
+		long bytes;
 
 		// don't close CheckedInputStream, as it will close the underlying inputstream
 		try (UncloseableInputStream uis = new UncloseableInputStream(is);

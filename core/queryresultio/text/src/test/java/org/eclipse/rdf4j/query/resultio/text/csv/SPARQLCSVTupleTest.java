@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.resultio.text.csv;
 
@@ -12,8 +15,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,11 +30,11 @@ import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQueryResult;
-import org.eclipse.rdf4j.query.resultio.AbstractQueryResultIOTupleTest;
 import org.eclipse.rdf4j.query.resultio.BooleanQueryResultFormat;
 import org.eclipse.rdf4j.query.resultio.QueryResultIO;
 import org.eclipse.rdf4j.query.resultio.TupleQueryResultFormat;
 import org.eclipse.rdf4j.query.resultio.TupleQueryResultWriter;
+import org.eclipse.rdf4j.testsuite.query.resultio.AbstractQueryResultIOTupleTest;
 import org.junit.Test;
 
 /**
@@ -62,10 +65,10 @@ public class SPARQLCSVTupleTest extends AbstractQueryResultIOTupleTest {
 		TupleQueryResultWriter writer = QueryResultIO.createTupleWriter(format, out);
 		writer.startDocument();
 		writer.startHeader();
-		writer.handleLinks(Arrays.<String>asList());
+		writer.handleLinks(List.<String>of());
 		QueryResults.report(createTupleNoBindingSets(), writer);
 
-		assertEquals("\r\n", out.toString("UTF-8").replaceAll("\\S+", ""));
+		assertEquals("\r\n", out.toString(StandardCharsets.UTF_8).replaceAll("\\S+", ""));
 	}
 
 	@Test
@@ -75,10 +78,10 @@ public class SPARQLCSVTupleTest extends AbstractQueryResultIOTupleTest {
 		TupleQueryResultWriter writer = QueryResultIO.createTupleWriter(format, out);
 		writer.startDocument();
 		writer.startHeader();
-		writer.handleLinks(Arrays.<String>asList());
+		writer.handleLinks(List.<String>of());
 		QueryResults.report(createTupleNoBindingSets(), writer);
 
-		assertRegex("a,b,c(\r\n)?", out.toString("UTF-8"));
+		assertRegex("a,b,c(\r\n)?", out.toString(StandardCharsets.UTF_8));
 	}
 
 	@Test
@@ -88,16 +91,16 @@ public class SPARQLCSVTupleTest extends AbstractQueryResultIOTupleTest {
 		TupleQueryResultWriter writer = QueryResultIO.createTupleWriter(format, out);
 		writer.startDocument();
 		writer.startHeader();
-		writer.handleLinks(Arrays.<String>asList());
+		writer.handleLinks(List.<String>of());
 		QueryResults.report(createTupleSingleVarMultipleBindingSets(), writer);
 
-		System.out.println(out.toString("UTF-8"));
+		System.out.println(out.toString(StandardCharsets.UTF_8));
 		assertRegex("a\r\n" + "foo:bar\r\n" + "2.0(E0)?\r\n" + "_:bnode3\r\n" + "''single-quoted string\r\n"
 				+ "\"\"\"\"\"double-quoted string\"\r\n" + "space at the end         \r\n"
 				+ "space at the end         \r\n" + "\"\"\"\"\"double-quoted string with no datatype\"\r\n"
 				+ "\"newline at the end \n\"(\r\n)?"
 				+ "urn:rdf4j:triple:PDw8dXJuOmE-IDxodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjdHlwZT4gPHVybjpiPj4-(\r\n)?",
-				out.toString("UTF-8"));
+				out.toString(StandardCharsets.UTF_8));
 	}
 
 	@Test
@@ -107,14 +110,14 @@ public class SPARQLCSVTupleTest extends AbstractQueryResultIOTupleTest {
 		TupleQueryResultWriter writer = QueryResultIO.createTupleWriter(format, out);
 		writer.startDocument();
 		writer.startHeader();
-		writer.handleLinks(Arrays.<String>asList());
+		writer.handleLinks(List.<String>of());
 		QueryResults.report(createTupleMultipleBindingSets(), writer);
 
 		assertRegex("a,b,c\r\n" + "foo:bar,_:bnode,baz\r\n" + "1,,Hello World!\r\n"
 				+ "http://example.org/test/ns/bindingA,http://example.com/other/ns/bindingB,\"http://example.com/other/ns/binding,C\"\r\n"
 				+ "\"string with newline at the end       \n\",string with space at the end         ,    \r\n"
 				+ "''single-quoted string,\"\"\"\"\"double-quoted string\",\t\tunencoded tab characters followed by encoded \t\t(\r\n)?",
-				out.toString("UTF-8"));
+				out.toString(StandardCharsets.UTF_8));
 	}
 
 	private void assertRegex(String pattern, String actual) {

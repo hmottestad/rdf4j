@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Distribution License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *******************************************************************************/
 package org.eclipse.rdf4j.federated;
 
 import java.util.Arrays;
@@ -24,7 +34,7 @@ public class BindTests extends SPARQLBaseTest {
 
 		List<BindingSet> res = runQuery(
 				"SELECT * WHERE { BIND(20 AS ?age) . ?person foaf:age ?age }");
-		assertContainsAll(res, "person", Sets.newHashSet(fullIri("http://namespace1.org/Person_1")));
+		assertContainsAll(res, "person", Sets.newHashSet(iri("http://namespace1.org/", "Person_1")));
 	}
 
 	@Test

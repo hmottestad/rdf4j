@@ -1,3 +1,14 @@
+/*******************************************************************************
+ * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Distribution License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *******************************************************************************/
+
 package org.eclipse.rdf4j.sail.shacl.ast.planNodes;
 
 import java.util.Objects;
@@ -16,8 +27,7 @@ public class TrimToTarget implements PlanNode {
 	boolean keepPath = false;
 
 	public TrimToTarget(PlanNode parent) {
-		parent = PlanNodeHelper.handleSorting(this, parent);
-		this.parent = parent;
+		this.parent = PlanNodeHelper.handleSorting(this, parent);
 //		this.stackTrace = Thread.currentThread().getStackTrace();
 	}
 
@@ -28,30 +38,22 @@ public class TrimToTarget implements PlanNode {
 			final CloseableIteration<? extends ValidationTuple, SailException> parentIterator = parent.iterator();
 
 			@Override
-			public void close() throws SailException {
+			public void localClose() throws SailException {
 				parentIterator.close();
 			}
 
 			@Override
-			boolean localHasNext() throws SailException {
+			protected boolean localHasNext() throws SailException {
 				return parentIterator.hasNext();
 			}
 
 			@Override
-			ValidationTuple loggingNext() throws SailException {
+			protected ValidationTuple loggingNext() throws SailException {
 
-				ValidationTuple next = parentIterator.next();
-				ValidationTuple validationTuple = new ValidationTuple(next);
-
-				validationTuple.trimToTarget();
-
-				return validationTuple;
-			}
-
-			@Override
-			public void remove() throws SailException {
+				return parentIterator.next().trimToTarget();
 
 			}
+
 		};
 
 	}

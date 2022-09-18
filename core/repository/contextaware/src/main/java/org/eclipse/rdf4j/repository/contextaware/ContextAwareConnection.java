@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.repository.contextaware;
 
@@ -14,9 +17,9 @@ import java.io.Reader;
 import java.net.URL;
 
 import org.eclipse.rdf4j.common.iteration.CloseableIteration;
+import org.eclipse.rdf4j.common.iteration.CloseableIteratorIteration;
 import org.eclipse.rdf4j.common.iteration.ConvertingIteration;
 import org.eclipse.rdf4j.common.iteration.Iteration;
-import org.eclipse.rdf4j.common.iteration.IteratorIteration;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
@@ -313,7 +316,7 @@ public class ContextAwareConnection extends RepositoryConnectionWrapper {
 	@Override
 	public void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
 		if (isNilContext(contexts)) {
-			add(new IteratorIteration<Statement, RuntimeException>(statements.iterator()));
+			add(new CloseableIteratorIteration<>(statements.iterator()));
 		} else {
 			super.add(statements, contexts);
 		}
@@ -455,9 +458,9 @@ public class ContextAwareConnection extends RepositoryConnectionWrapper {
 	 * Gets all statements with a specific subject, predicate and/or object from the repository. The result is
 	 * optionally restricted to the specified set of named contexts.
 	 *
-	 * @param subj A Resource specifying the subject, or <tt>null</tt> for a wildcard.
-	 * @param pred A URI specifying the predicate, or <tt>null</tt> for a wildcard.
-	 * @param obj  A Value specifying the object, or <tt>null</tt> for a wildcard.
+	 * @param subj A Resource specifying the subject, or <var>null</var> for a wildcard.
+	 * @param pred A URI specifying the predicate, or <var>null</var> for a wildcard.
+	 * @param obj  A Value specifying the object, or <var>null</var> for a wildcard.
 	 * @return The statements matching the specified pattern. The result object is a {@link RepositoryResult} object, a
 	 *         lazy Iterator-like object containing {@link Statement}s and optionally throwing a
 	 *         {@link RepositoryException} when an error when a problem occurs during retrieval.
@@ -508,9 +511,9 @@ public class ContextAwareConnection extends RepositoryConnectionWrapper {
 	 * Checks whether the repository contains statements with a specific subject, predicate and/or object, optionally in
 	 * the specified contexts.
 	 *
-	 * @param subj A Resource specifying the subject, or <tt>null</tt> for a wildcard.
-	 * @param pred A URI specifying the predicate, or <tt>null</tt> for a wildcard.
-	 * @param obj  A Value specifying the object, or <tt>null</tt> for a wildcard.
+	 * @param subj A Resource specifying the subject, or <var>null</var> for a wildcard.
+	 * @param pred A URI specifying the predicate, or <var>null</var> for a wildcard.
+	 * @param obj  A Value specifying the object, or <var>null</var> for a wildcard.
 	 * @return true If a matching statement is in the repository in the specified context, false otherwise.
 	 * @see #getReadContexts()
 	 * @see #isIncludeInferred()
@@ -635,7 +638,7 @@ public class ContextAwareConnection extends RepositoryConnectionWrapper {
 	@Override
 	public void remove(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
 		if (isAllContext(contexts)) {
-			remove(new IteratorIteration<Statement, RuntimeException>(statements.iterator()));
+			remove(new CloseableIteratorIteration<>(statements.iterator()));
 		} else {
 			super.remove(statements, contexts);
 		}

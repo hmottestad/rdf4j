@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 
 package org.eclipse.rdf4j.sail.elasticsearchstore.benchmark;
@@ -17,8 +20,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.util.Files;
-import org.eclipse.rdf4j.IsolationLevels;
+import org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner;
 import org.eclipse.rdf4j.common.iteration.Iterations;
+import org.eclipse.rdf4j.common.transaction.IsolationLevels;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
@@ -41,8 +45,6 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 
-import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
-
 /**
  * @author Håvard Ottestad
  */
@@ -55,9 +57,8 @@ import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 public class ReadCacheBenchmark {
 
-	private static EmbeddedElastic embeddedElastic;
-
-	private static File installLocation = Files.newTemporaryFolder();
+	private static final File installLocation = Files.newTemporaryFolder();
+	private static ElasticsearchClusterRunner runner;
 
 	private SailRepository repoWithoutCache;
 	private SailRepository repoWithCache;
@@ -81,15 +82,14 @@ public class ReadCacheBenchmark {
 		// JMH does not correctly set JAVA_HOME. Change the JAVA_HOME below if you the following error:
 		// [EmbeddedElsHandler] INFO p.a.t.e.ElasticServer - could not find java; set JAVA_HOME or ensure java is in
 		// PATH
-		embeddedElastic = TestHelpers.startElasticsearch(installLocation,
-				"/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home");
+		runner = TestHelpers.startElasticsearch(installLocation);
 
 		repoWithoutCache = new SailRepository(
-				new ElasticsearchStore("localhost", embeddedElastic.getTransportTcpPort(), "cluster1", "testindex1",
+				new ElasticsearchStore("localhost", TestHelpers.getPort(runner), TestHelpers.CLUSTER, "testindex1",
 						false));
 
 		repoWithCache = new SailRepository(
-				new ElasticsearchStore("localhost", embeddedElastic.getTransportTcpPort(), "cluster1", "testindex2",
+				new ElasticsearchStore("localhost", TestHelpers.getPort(runner), TestHelpers.CLUSTER, "testindex2",
 						true));
 
 		try (SailRepositoryConnection connection = repoWithCache.getConnection()) {
@@ -117,10 +117,8 @@ public class ReadCacheBenchmark {
 
 	@TearDown(Level.Trial)
 	public void afterClass() {
-
 		repoWithoutCache.shutDown();
-		TestHelpers.stopElasticsearch(embeddedElastic, installLocation);
-
+		TestHelpers.stopElasticsearch(runner);
 	}
 
 	@Benchmark

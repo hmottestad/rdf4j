@@ -1,11 +1,19 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.algebra.evaluation;
+
+import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.Queue;
+import java.util.Set;
 
 import org.eclipse.rdf4j.common.annotation.Experimental;
 import org.eclipse.rdf4j.common.iteration.CloseableIteration;
@@ -18,6 +26,7 @@ import org.eclipse.rdf4j.query.algebra.ValueExpr;
 import org.eclipse.rdf4j.query.algebra.evaluation.federation.FederatedService;
 import org.eclipse.rdf4j.query.algebra.evaluation.federation.FederatedServiceResolver;
 import org.eclipse.rdf4j.query.algebra.evaluation.impl.EvaluationStatistics;
+import org.eclipse.rdf4j.query.algebra.evaluation.impl.QueryEvaluationContext;
 import org.eclipse.rdf4j.repository.sparql.federation.SPARQLFederatedService;
 
 /**
@@ -86,11 +95,26 @@ public interface EvaluationStrategy extends FederatedServiceResolver {
 			throws QueryEvaluationException;
 
 	/**
+	 * Prepare a QueryEvaluationStep that tries to do as much work once per query avoiding repeated calls to the same
+	 * code as much as possible. This depends on java invoke dynamic for performance.
+	 *
+	 * @param expr that is to be evaluated later
+	 * @return a QueryEvaluationStep that may avoid doing repeating the same work over and over.
+	 */
+	default QueryEvaluationStep precompile(TupleExpr expr) {
+		return QueryEvaluationStep.minimal(this, expr);
+	}
+
+	default QueryEvaluationStep precompile(TupleExpr expr, QueryEvaluationContext context) {
+		return QueryEvaluationStep.minimal(this, expr);
+	}
+
+	/**
 	 * Gets the value of this expression.
 	 *
 	 * @param expr
 	 * @param bindings The variables bindings to use for evaluating the expression, if applicable.
-	 * @return The Value that this expression evaluates to, or <tt>null</tt> if the expression could not be evaluated.
+	 * @return The Value that this expression evaluates to, or <var>null</var> if the expression could not be evaluated.
 	 */
 	Value evaluate(ValueExpr expr, BindingSet bindings)
 			throws ValueExprEvaluationException, QueryEvaluationException;
@@ -103,9 +127,12 @@ public interface EvaluationStrategy extends FederatedServiceResolver {
 	 * @return The result of the evaluation.
 	 * @throws ValueExprEvaluationException If the value expression could not be evaluated, for example when comparing
 	 *                                      two incompatible operands. When thrown, the result of the boolean expression
-	 *                                      is neither <tt>true</tt> nor <tt>false</tt> , but unknown.
+	 *                                      is neither <var>true</var> nor <var>false</var> , but unknown.
 	 */
 	boolean isTrue(ValueExpr expr, BindingSet bindings)
+			throws ValueExprEvaluationException, QueryEvaluationException;
+
+	boolean isTrue(QueryValueEvaluationStep expr, BindingSet bindings)
 			throws ValueExprEvaluationException, QueryEvaluationException;
 
 	/**
@@ -120,6 +147,14 @@ public interface EvaluationStrategy extends FederatedServiceResolver {
 	}
 
 	/**
+	 * Enable or disable results size tracking for the query plan.
+	 */
+	@Experimental
+	default boolean isTrackResultSize() {
+		return false;
+	}
+
+	/**
 	 * Enable or disable time tracking for the query plan. Useful to determine which parts of a query plan take the most
 	 * time to evaluate.
 	 *
@@ -129,4 +164,17 @@ public interface EvaluationStrategy extends FederatedServiceResolver {
 	default void setTrackTime(boolean trackTime) {
 		// no-op for backwards compatibility
 	}
+
+	default QueryValueEvaluationStep precompile(ValueExpr arg, QueryEvaluationContext context) {
+		return new QueryValueEvaluationStep.Minimal(this, arg);
+	}
+
+	default <T> Set<T> makeSet() {
+		return new HashSet<>();
+	}
+
+	default <T> Queue<T> makeQueue() {
+		return new ArrayDeque<>();
+	}
+
 }

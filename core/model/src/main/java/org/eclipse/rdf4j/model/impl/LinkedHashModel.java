@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.model.impl;
 
@@ -29,7 +32,7 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.util.PatternIterator;
 
 /**
- * Hash table based implementation of the <tt>{@link Model}</tt> interface.
+ * Hash table based implementation of the <var>{@link Model}</var> interface.
  * <p>
  * This implementation provides constant-time performance for filters using a single term, assuming the hash function
  * disperses the elements properly among the buckets. Each term is indexed using a {@link HashMap}. When multiple terms
@@ -290,9 +293,9 @@ public class LinkedHashModel extends AbstractModel {
 
 	private class ModelIterator implements Iterator<ModelStatement> {
 
-		private Iterator<ModelStatement> iter;
+		private final Iterator<ModelStatement> iter;
 
-		private Set<ModelStatement> owner;
+		private final Set<ModelStatement> owner;
 
 		private ModelStatement last;
 
@@ -347,7 +350,7 @@ public class LinkedHashModel extends AbstractModel {
 
 		Set<ModelStatement> contexts = new LinkedHashSet<>();
 
-		private V value;
+		private final V value;
 
 		public ModelNode(V value) {
 			this.value = value;
@@ -475,28 +478,32 @@ public class LinkedHashModel extends AbstractModel {
 		Set<ModelStatement> p = null;
 		Set<ModelStatement> o = null;
 		if (subj != null) {
-			if (!values.containsKey(subj)) {
+			ModelNode modelNode = values.get(subj);
+			if (modelNode == null) {
 				return Collections.emptySet();
 			}
-			s = values.get(subj).subjects;
+			s = modelNode.subjects;
 		}
 		if (pred != null) {
-			if (!values.containsKey(pred)) {
+			ModelNode modelNode = values.get(pred);
+			if (modelNode == null) {
 				return Collections.emptySet();
 			}
-			p = values.get(pred).predicates;
+			p = modelNode.predicates;
 		}
 		if (obj != null) {
-			if (!values.containsKey(obj)) {
+			ModelNode modelNode = values.get(obj);
+			if (modelNode == null) {
 				return Collections.emptySet();
 			}
-			o = values.get(obj).objects;
+			o = modelNode.objects;
 		}
 		if (contexts.length == 1) {
-			if (!values.containsKey(contexts[0])) {
+			ModelNode modelNode = values.get(contexts[0]);
+			if (modelNode == null) {
 				return Collections.emptySet();
 			}
-			Set<ModelStatement> c = values.get(contexts[0]).contexts;
+			Set<ModelStatement> c = modelNode.contexts;
 			return smallest(statements, s, p, o, c);
 		} else {
 			return smallest(statements, s, p, o);

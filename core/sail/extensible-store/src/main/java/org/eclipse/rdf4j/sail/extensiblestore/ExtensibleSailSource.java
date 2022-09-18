@@ -1,19 +1,22 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.extensiblestore;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import org.eclipse.rdf4j.IsolationLevel;
 import org.eclipse.rdf4j.common.annotation.Experimental;
 import org.eclipse.rdf4j.common.iteration.CloseableIteration;
 import org.eclipse.rdf4j.common.iteration.CloseableIteratorIteration;
+import org.eclipse.rdf4j.common.transaction.IsolationLevel;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Namespace;
 import org.eclipse.rdf4j.model.Resource;
@@ -145,16 +148,17 @@ class ExtensibleSailSource implements SailSource {
 
 			@Override
 			public CloseableIteration<? extends Namespace, SailException> getNamespaces() {
-				return new CloseableIteratorIteration<Namespace, SailException>(namespaceStore.iterator());
+				return new CloseableIteratorIteration<>(namespaceStore.iterator());
 //				return new EmptyIteration<>();
 			}
 
 			@Override
 			public CloseableIteration<? extends Resource, SailException> getContextIDs() throws SailException {
-				return new CloseableIteration<Resource, SailException>() {
-					CloseableIteration<? extends Statement, SailException> statements = getStatements(null, null, null);
+				return new CloseableIteration<>() {
+					final CloseableIteration<? extends Statement, SailException> statements = getStatements(null, null,
+							null);
 
-					Set<Resource> contexts = new HashSet<>();
+					final Set<Resource> contexts = new HashSet<>();
 
 					Resource next = internalNext();
 

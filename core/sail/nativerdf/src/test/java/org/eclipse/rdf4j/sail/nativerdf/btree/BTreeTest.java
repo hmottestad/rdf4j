@@ -1,21 +1,24 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.nativerdf.btree;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.eclipse.rdf4j.common.io.FileUtil;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Arjohn Kampman
@@ -26,9 +29,9 @@ public class BTreeTest {
 	 * Constants *
 	 *-----------*/
 
-	private static List<byte[]> TEST_VALUES = new ArrayList<>(256);
+	private static final List<byte[]> TEST_VALUES = new ArrayList<>(256);
 
-	private static List<byte[]> RANDOMIZED_TEST_VALUES = new ArrayList<>(256);
+	private static final List<byte[]> RANDOMIZED_TEST_VALUES = new ArrayList<>(256);
 
 	static {
 		for (int i = 0; i < 256; i++) {
@@ -45,7 +48,8 @@ public class BTreeTest {
 	 * Variables *
 	 *-----------*/
 
-	private File dir;
+	@Rule
+	public final TemporaryFolder tmpDir = new TemporaryFolder();
 
 	private BTree btree;
 
@@ -55,14 +59,12 @@ public class BTreeTest {
 
 	@Before
 	public void setUp() throws Exception {
-		dir = FileUtil.createTempDir("btree");
-		btree = new BTree(dir, "test", 85, 1);
+		btree = new BTree(tmpDir.newFolder(), "test", 85, 1);
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		btree.delete();
-		FileUtil.deleteDir(dir);
 	}
 
 	@Test

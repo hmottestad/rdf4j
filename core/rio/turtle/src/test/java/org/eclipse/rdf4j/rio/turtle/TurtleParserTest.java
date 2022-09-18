@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.rio.turtle;
 
@@ -50,7 +53,7 @@ public class TurtleParserTest {
 
 	private TurtleParser parser;
 
-	private ValueFactory vf = SimpleValueFactory.getInstance();
+	private final ValueFactory vf = SimpleValueFactory.getInstance();
 
 	private final ParseErrorCollector errorCollector = new ParseErrorCollector();
 
@@ -60,11 +63,8 @@ public class TurtleParserTest {
 
 	private final String baseURI = "http://example.org/";
 
-	private SimpleParseLocationListener locationListener = new SimpleParseLocationListener();
+	private final SimpleParseLocationListener locationListener = new SimpleParseLocationListener();
 
-	/**
-	 * @throws java.lang.Exception
-	 */
 	@Before
 	public void setUp() {
 		parser = new TurtleParser();
@@ -360,6 +360,16 @@ public class TurtleParserTest {
 	}
 
 	@Test
+	public void testLineNumberReportingInLongStringLiterals() throws IOException {
+		assertEquals(0, locationListener.getLineNo());
+		assertEquals(0, locationListener.getColumnNo());
+		Reader in = new StringReader("<urn:a> <urn:b> \"\"\"is\nallowed\nin\na very long string\"\"\" .");
+		parser.parse(in, baseURI);
+		assertEquals(4, locationListener.getLineNo());
+		assertEquals(-1, locationListener.getColumnNo());
+	}
+
+	@Test
 	public void testParseBooleanLiteralComma() throws IOException {
 		String data = "<urn:a> <urn:b> true, false .";
 		Reader r = new StringReader(data);
@@ -510,7 +520,7 @@ public class TurtleParserTest {
 	}
 
 	/**
-	 * Extend standard Turtle parser to also accept RDF* data (see GH-2511)
+	 * Extend standard Turtle parser to also accept RDF-star data (see GH-2511)
 	 *
 	 */
 	@Test

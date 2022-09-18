@@ -1,3 +1,14 @@
+/*******************************************************************************
+ * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Distribution License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *******************************************************************************/
+
 package org.eclipse.rdf4j.sail.shacl.ast.constraintcomponents;
 
 import java.util.Set;
@@ -23,7 +34,7 @@ public class MinExclusiveConstraintComponent extends SimpleAbstractConstraintCom
 	}
 
 	@Override
-	public void toModel(Resource subject, IRI predicate, Model model, Set<Resource> exported) {
+	public void toModel(Resource subject, IRI predicate, Model model, Set<Resource> cycleDetection) {
 		model.add(subject, SHACL.MIN_EXCLUSIVE, minExclusive);
 	}
 
@@ -32,7 +43,7 @@ public class MinExclusiveConstraintComponent extends SimpleAbstractConstraintCom
 		if (negated) {
 			return literalToString(minExclusive) + " < ?" + varName;
 		} else {
-			return literalToString(minExclusive) + " >= ?" + varName + "";
+			return literalToString(minExclusive) + " >= ?" + varName;
 		}
 	}
 

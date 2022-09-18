@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.algebra.evaluation.iterator;
 
@@ -36,9 +39,8 @@ public class OrderIteratorTest extends TestCase {
 
 		int removeCount = 0;
 
-		@Override
-		public void setIterator(Iterator<? extends BindingSet> iter) {
-			super.setIterator(iter);
+		public IterationStub(Iterator<BindingSet> iterator) {
+			super(iterator);
 		}
 
 		@Override
@@ -120,15 +122,15 @@ public class OrderIteratorTest extends TestCase {
 
 	private List<BindingSet> list;
 
-	private BindingSet b1 = new BindingSetSize(1);
+	private final BindingSet b1 = new BindingSetSize(1);
 
-	private BindingSet b2 = new BindingSetSize(2);
+	private final BindingSet b2 = new BindingSetSize(2);
 
-	private BindingSet b3 = new BindingSetSize(3);
+	private final BindingSet b3 = new BindingSetSize(3);
 
-	private BindingSet b4 = new BindingSetSize(4);
+	private final BindingSet b4 = new BindingSetSize(4);
 
-	private BindingSet b5 = new BindingSetSize(5);
+	private final BindingSet b5 = new BindingSetSize(5);
 
 	private SizeComparator cmp;
 
@@ -185,8 +187,7 @@ public class OrderIteratorTest extends TestCase {
 	protected void setUp() throws Exception {
 		list = Arrays.asList(b3, b5, b2, b1, b4, b2);
 		cmp = new SizeComparator();
-		iteration = new IterationStub();
-		iteration.setIterator(list.iterator());
+		iteration = new IterationStub(list.iterator());
 		order = new OrderIterator(iteration, cmp);
 	}
 

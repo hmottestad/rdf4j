@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 
 package org.eclipse.rdf4j.sail.shacl.results.lazy;
@@ -30,7 +33,6 @@ import org.eclipse.rdf4j.sail.shacl.results.ValidationResult;
  *
  */
 @InternalUseOnly
-@Deprecated
 public class LazyValidationReport extends ValidationReport {
 
 	private List<ValidationResultIterator> validationResultIterators;
@@ -74,11 +76,11 @@ public class LazyValidationReport extends ValidationReport {
 		model.add(getId(), RDF.TYPE, SHACL.VALIDATION_REPORT);
 		model.add(getId(), RDF4J.TRUNCATED, BooleanLiteral.valueOf(truncated));
 
-		HashSet<Resource> resources = new HashSet<>();
+		HashSet<Resource> rdfListDedupe = new HashSet<>();
 
 		for (ValidationResult result : validationResult) {
 			model.add(getId(), SHACL.RESULT, result.getId());
-			result.asModel(model, resources);
+			result.asModel(model, rdfListDedupe);
 		}
 
 		return model;
@@ -86,10 +88,6 @@ public class LazyValidationReport extends ValidationReport {
 
 	public Model asModel() {
 		return asModel(new DynamicModelFactory().createEmptyModel());
-	}
-
-	public Resource getId() {
-		return id;
 	}
 
 	/**

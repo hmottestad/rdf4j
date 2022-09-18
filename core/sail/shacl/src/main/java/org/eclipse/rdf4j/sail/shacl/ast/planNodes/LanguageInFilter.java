@@ -1,15 +1,19 @@
 /*******************************************************************************
  * Copyright (c) 2020 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 
 package org.eclipse.rdf4j.sail.shacl.ast.planNodes;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -66,5 +70,25 @@ public class LanguageInFilter extends FilterPlanNode {
 				"languageRanges=" + Arrays.toString(languageRanges.toArray()) +
 				", lowerCaseLanguageIn=" + Arrays.toString(lowerCaseLanguageIn.toArray()) +
 				'}';
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		if (!super.equals(o)) {
+			return false;
+		}
+		LanguageInFilter that = (LanguageInFilter) o;
+		return languageRanges.equals(that.languageRanges) && lowerCaseLanguageIn.equals(that.lowerCaseLanguageIn);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), languageRanges, lowerCaseLanguageIn);
 	}
 }

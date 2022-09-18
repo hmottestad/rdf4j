@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.http.client;
 
@@ -28,13 +31,13 @@ import java.util.HashMap;
 import org.apache.http.Header;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.message.BasicHeader;
-import org.eclipse.rdf4j.IsolationLevels;
+import org.eclipse.rdf4j.common.transaction.IsolationLevels;
 import org.eclipse.rdf4j.http.protocol.Protocol;
 import org.eclipse.rdf4j.query.resultio.TupleQueryResultFormat;
 import org.eclipse.rdf4j.repository.config.RepositoryConfig;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 /**
@@ -44,11 +47,11 @@ import org.mockito.ArgumentCaptor;
  */
 public class RDF4JProtocolSessionTest extends SPARQLProtocolSessionTest {
 
-	private String testHeader = "X-testing-header";
-	private String testValue = "foobar";
+	private final String testHeader = "X-testing-header";
+	private final String testValue = "foobar";
 
-	private String serverURL = "http://localhost:" + wireMockRule.port() + "/rdf4j-server";
-	private String repositoryID = "test";
+	private final String serverURL = "http://localhost:" + wireMockServer.port() + "/rdf4j-server";
+	private final String repositoryID = "test";
 
 	RDF4JProtocolSession getRDF4JSession() {
 		return (RDF4JProtocolSession) sparqlSession;

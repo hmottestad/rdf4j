@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2019 Eclipse RDF4J contributors.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.federated.optimizer;
 
@@ -12,9 +15,11 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.rdf4j.federated.algebra.FedXLeftJoin;
+import org.eclipse.rdf4j.federated.algebra.FederatedDescribeOperator;
 import org.eclipse.rdf4j.federated.algebra.NJoin;
 import org.eclipse.rdf4j.federated.exception.OptimizationException;
 import org.eclipse.rdf4j.federated.structures.QueryInfo;
+import org.eclipse.rdf4j.query.algebra.DescribeOperator;
 import org.eclipse.rdf4j.query.algebra.Filter;
 import org.eclipse.rdf4j.query.algebra.Join;
 import org.eclipse.rdf4j.query.algebra.LeftJoin;
@@ -24,7 +29,7 @@ import org.eclipse.rdf4j.query.algebra.Slice;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
 import org.eclipse.rdf4j.query.algebra.TupleExpr;
 import org.eclipse.rdf4j.query.algebra.Union;
-import org.eclipse.rdf4j.query.algebra.helpers.AbstractQueryModelVisitor;
+import org.eclipse.rdf4j.query.algebra.helpers.AbstractSimpleQueryModelVisitor;
 
 /**
  * Generic optimizer
@@ -35,7 +40,8 @@ import org.eclipse.rdf4j.query.algebra.helpers.AbstractQueryModelVisitor;
  *
  * @author Andreas Schwarte
  */
-public class GenericInfoOptimizer extends AbstractQueryModelVisitor<OptimizationException> implements FedXOptimizer {
+public class GenericInfoOptimizer extends AbstractSimpleQueryModelVisitor<OptimizationException>
+		implements FedXOptimizer {
 
 	protected boolean hasFilter = false;
 	protected boolean hasUnion = false;
@@ -49,7 +55,7 @@ public class GenericInfoOptimizer extends AbstractQueryModelVisitor<Optimization
 	protected final QueryInfo queryInfo;
 
 	public GenericInfoOptimizer(QueryInfo queryInfo) {
-		super();
+		super(true);
 		this.queryInfo = queryInfo;
 	}
 
@@ -81,6 +87,9 @@ public class GenericInfoOptimizer extends AbstractQueryModelVisitor<Optimization
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception e) {
+			if (e instanceof InterruptedException) {
+				Thread.currentThread().interrupt();
+			}
 			throw new RuntimeException(e);
 		}
 
@@ -150,6 +159,17 @@ public class GenericInfoOptimizer extends AbstractQueryModelVisitor<Optimization
 			limit = node.getLimit();
 		}
 		super.meet(node);
+	}
+
+	@Override
+	public void meet(DescribeOperator node) throws OptimizationException {
+		/*
+		 * Replace with a FedX Describe Operator
+		 */
+		FederatedDescribeOperator newNode = new FederatedDescribeOperator(node.getArg(), queryInfo);
+		newNode.visitChildren(this);
+
+		node.replaceWith(newNode);
 	}
 
 	public boolean hasService() {

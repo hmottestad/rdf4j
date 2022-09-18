@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query.algebra.evaluation.impl;
 
@@ -16,7 +19,7 @@ import java.util.Set;
 
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.Dataset;
-import org.eclipse.rdf4j.query.algebra.Extension;
+import org.eclipse.rdf4j.query.algebra.BindingSetAssignment;
 import org.eclipse.rdf4j.query.algebra.Join;
 import org.eclipse.rdf4j.query.algebra.LeftJoin;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
@@ -34,6 +37,7 @@ import org.eclipse.rdf4j.query.algebra.helpers.TupleExprs;
  * @author Arjohn Kampman
  * @author James Leigh
  */
+@Deprecated(forRemoval = true, since = "4.1.0")
 public class QueryJoinOptimizer implements QueryOptimizer {
 
 	protected final EvaluationStatistics statistics;
@@ -87,6 +91,17 @@ public class QueryJoinOptimizer implements QueryOptimizer {
 			node.setResultSizeEstimate(Math.max(statistics.getCardinality(node), node.getResultSizeEstimate()));
 		}
 
+		private void optimizePriorityJoin(Set<String> origBoundVars, TupleExpr join) {
+
+			Set<String> saveBoundVars = boundVars;
+			try {
+				boundVars = new HashSet<>(origBoundVars);
+				join.visit(this);
+			} finally {
+				boundVars = saveBoundVars;
+			}
+		}
+
 		@Override
 		public void meet(Join node) {
 
@@ -104,7 +119,7 @@ public class QueryJoinOptimizer implements QueryOptimizer {
 				List<TupleExpr> priorityArgs = new ArrayList<>(joinArgs.size());
 
 				// get all extensions (BIND clause)
-				List<Extension> orderedExtensions = getExtensions(joinArgs);
+				List<TupleExpr> orderedExtensions = getExtensions(joinArgs);
 				joinArgs.removeAll(orderedExtensions);
 				priorityArgs.addAll(orderedExtensions);
 
@@ -178,6 +193,13 @@ public class QueryJoinOptimizer implements QueryOptimizer {
 					// Replace old join hierarchy
 					node.replaceWith(replacement);
 
+					// we optimize after the replacement call above in case the optimize call below
+					// recurses back into this function and we need all the node's parent/child pointers
+					// set up correctly for replacement to work on subsequent calls
+					if (priorityJoins != null) {
+						optimizePriorityJoin(origBoundVars, priorityJoins);
+					}
+
 				} else {
 					// only subselect/priority joins involved in this query.
 					node.replaceWith(priorityJoins);
@@ -217,11 +239,11 @@ public class QueryJoinOptimizer implements QueryOptimizer {
 			return varFreqMap;
 		}
 
-		protected List<Extension> getExtensions(List<TupleExpr> expressions) {
-			List<Extension> extensions = new ArrayList<>();
+		protected List<TupleExpr> getExtensions(List<TupleExpr> expressions) {
+			List<TupleExpr> extensions = new ArrayList<>();
 			for (TupleExpr expr : expressions) {
-				if (expr instanceof Extension) {
-					extensions.add((Extension) expr);
+				if (TupleExprs.containsExtension(expr)) {
+					extensions.add(expr);
 				}
 			}
 			return extensions;
@@ -279,15 +301,15 @@ public class QueryJoinOptimizer implements QueryOptimizer {
 				for (int j = i + 1; j < subselects.size(); j++) {
 					TupleExpr secondArg = subselects.get(j);
 
-					Set<String> names = firstArg.getBindingNames();
-					names.retainAll(secondArg.getBindingNames());
+					Set<String> firstArgBindingNames = firstArg.getBindingNames();
+					Set<String> secondArgBindingNames = secondArg.getBindingNames();
+					int joinSize = getJoinSize(secondArgBindingNames, firstArgBindingNames);
 
-					int joinSize = names.size();
 					if (joinSize > maxJoinSize) {
 						maxJoinSize = joinSize;
 					}
 
-					List<TupleExpr[]> l = null;
+					List<TupleExpr[]> l;
 
 					if (joinSizes.containsKey(joinSize)) {
 						l = joinSizes.get(joinSize);
@@ -354,12 +376,10 @@ public class QueryJoinOptimizer implements QueryOptimizer {
 			for (TupleExpr candidate : joinArgs) {
 				if (!currentList.contains(candidate)) {
 					Set<String> names = candidate.getBindingNames();
-					names.retainAll(currentListNames);
-					int joinSize = names.size();
+					int joinSize = getJoinSize(currentListNames, names);
 
-					names = candidate.getBindingNames();
-					names.addAll(currentListNames);
-					int unionSize = names.size();
+					Set<String> candidateBindingNames = candidate.getBindingNames();
+					int unionSize = getUnionSize(currentListNames, candidateBindingNames);
 
 					if (joinSize > currentJoinSize) {
 						selected = candidate;
@@ -413,6 +433,7 @@ public class QueryJoinOptimizer implements QueryOptimizer {
 
 		protected double getTupleExprCost(TupleExpr tupleExpr, Map<TupleExpr, Double> cardinalityMap,
 				Map<TupleExpr, List<Var>> varsMap, Map<Var, Integer> varFreqMap, Set<String> boundVars) {
+
 			double cost = cardinalityMap.get(tupleExpr);
 
 			List<Var> vars = varsMap.get(tupleExpr);
@@ -420,7 +441,9 @@ public class QueryJoinOptimizer implements QueryOptimizer {
 			// Compensate for variables that are bound earlier in the evaluation
 			List<Var> unboundVars = getUnboundVars(vars);
 			List<Var> constantVars = getConstantVars(vars);
+
 			int nonConstantVarCount = vars.size() - constantVars.size();
+
 			if (nonConstantVarCount > 0) {
 				double exp = (double) unboundVars.size() / nonConstantVarCount;
 				cost = Math.pow(cost, exp);
@@ -436,6 +459,23 @@ public class QueryJoinOptimizer implements QueryOptimizer {
 				int foreignVarFreq = getForeignVarFreq(unboundVars, varFreqMap);
 				if (foreignVarFreq > 0) {
 					cost /= 1 + foreignVarFreq;
+				}
+			}
+
+			// BindingSetAssignment has a typical constant cost. This cost is not based on statistics so is much more
+			// reliable. If the BindingSetAssignment binds to any of the other variables in the other tuple expressions
+			// to choose from, then the cost of the BindingSetAssignment should be set to 0 since it will always limit
+			// the upper bound of any other costs. This way the BindingSetAssignment will be chosen as the left
+			// argument.
+			if (tupleExpr instanceof BindingSetAssignment) {
+
+				Set<Var> varsUsedInOtherExpressions = varFreqMap.keySet();
+
+				for (String assuredBindingName : tupleExpr.getAssuredBindingNames()) {
+					if (varsUsedInOtherExpressions.contains(new Var(assuredBindingName))) {
+						cost = 0;
+						break;
+					}
 				}
 			}
 
@@ -479,5 +519,25 @@ public class QueryJoinOptimizer implements QueryOptimizer {
 
 			return result;
 		}
+	}
+
+	private static int getUnionSize(Set<String> currentListNames, Set<String> candidateBindingNames) {
+		int count = 0;
+		for (String n : currentListNames) {
+			if (!candidateBindingNames.contains(n)) {
+				count++;
+			}
+		}
+		return candidateBindingNames.size() + count;
+	}
+
+	private static int getJoinSize(Set<String> currentListNames, Set<String> names) {
+		int count = 0;
+		for (String name : names) {
+			if (currentListNames.contains(name)) {
+				count++;
+			}
+		}
+		return count;
 	}
 }

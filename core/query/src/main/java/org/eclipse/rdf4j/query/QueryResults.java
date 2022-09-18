@@ -1,17 +1,21 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query;
 
 import java.io.InputStream;
+import java.lang.ref.Cleaner;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -23,7 +27,7 @@ import java.util.stream.Stream;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
-import org.eclipse.rdf4j.RDF4JException;
+import org.eclipse.rdf4j.common.exception.RDF4JException;
 import org.eclipse.rdf4j.common.iteration.AbstractCloseableIteration;
 import org.eclipse.rdf4j.common.iteration.CloseableIteration;
 import org.eclipse.rdf4j.common.iteration.DistinctIteration;
@@ -51,6 +55,8 @@ import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility methods related to query results.
@@ -59,12 +65,12 @@ import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
  */
 public class QueryResults extends Iterations {
 
+	private final static Cleaner cleaner = Cleaner.create();
+
 	/**
 	 * Get a {@link Model} containing all elements obtained from the specified query result.
 	 *
-	 * @param iteration the source iteration to get the statements from. This can be a {@link GraphQueryResult}, a
-	 *                  {@link RepositoryResult&lt;Statement&gt;}, or any other instance of {@link CloseableIteration
-	 *                  &lt;Statement&gt;}
+	 * @param iteration the source iteration to get the statements from.
 	 * @return a {@link Model} containing all statements obtained from the specified source iteration.
 	 */
 	public static Model asModel(CloseableIteration<? extends Statement, ? extends RDF4JException> iteration)
@@ -75,9 +81,7 @@ public class QueryResults extends Iterations {
 	/**
 	 * Get a {@link Model} containing all elements obtained from the specified query result.
 	 *
-	 * @param iteration    the source iteration to get the statements from. This can be a {@link GraphQueryResult}, a
-	 *                     {@link RepositoryResult&lt;Statement&gt;}, or any other instance of {@link CloseableIteration
-	 *                     &lt;Statement&gt;}
+	 * @param iteration    the source iteration to get the statements from.
 	 * @param modelFactory the ModelFactory used to instantiate the model that gets returned.
 	 * @return a {@link Model} containing all statements obtained from the specified source iteration.
 	 */
@@ -87,6 +91,32 @@ public class QueryResults extends Iterations {
 		Model model = modelFactory.createEmptyModel();
 		addAll(iteration, model);
 		return model;
+	}
+
+	/**
+	 * Get a List containing all elements obtained from the specified {@link QueryResult}.
+	 *
+	 * @param queryResult the {@link QueryResult} to get the elements from
+	 * @return a List containing all elements obtained from the specified query result.
+	 */
+	public static <T> List<T> asList(QueryResult<T> queryResult) throws QueryEvaluationException {
+		// stream.collect is slightly slower than addAll for lists
+		List<T> list = new ArrayList<>();
+
+		// addAll closes the iteration
+		return addAll(queryResult, list);
+	}
+
+	/**
+	 * Get a Set containing all elements obtained from the specified {@link QueryResult}.
+	 *
+	 * @param queryResult the {@link QueryResult} to get the elements from
+	 * @return a Set containing all elements obtained from the specified query result.
+	 */
+	public static <T> Set<T> asSet(QueryResult<T> queryResult) throws QueryEvaluationException {
+		try (Stream<T> stream = queryResult.stream()) {
+			return stream.collect(Collectors.toSet());
+		}
 	}
 
 	/**
@@ -213,10 +243,13 @@ public class QueryResults extends Iterations {
 	 * @param baseURI The base URI for the RDF document.
 	 * @param format  The {@link RDFFormat} of the RDF document.
 	 * @return A {@link GraphQueryResult} that parses in the background, and must be closed to prevent resource leaks.
+	 * @deprecated WeakReference<?> callerReference argument will be removed
 	 */
-	public static GraphQueryResult parseGraphBackground(InputStream in, String baseURI, RDFFormat format)
+	@Deprecated(since = "4.1.2")
+	public static GraphQueryResult parseGraphBackground(InputStream in, String baseURI, RDFFormat format,
+			WeakReference<?> callerReference)
 			throws UnsupportedRDFormatException {
-		return parseGraphBackground(in, baseURI, Rio.createParser(format));
+		return parseGraphBackground(in, baseURI, Rio.createParser(format), callerReference);
 	}
 
 	/**
@@ -229,21 +262,24 @@ public class QueryResults extends Iterations {
 	 * @param baseURI The base URI for the RDF document.
 	 * @param parser  The {@link RDFParser}.
 	 * @return A {@link GraphQueryResult} that parses in the background, and must be closed to prevent resource leaks.
+	 * @deprecated WeakReference<?> callerReference argument will be removed
 	 */
-	public static GraphQueryResult parseGraphBackground(InputStream in, String baseURI, RDFParser parser) {
+	@Deprecated(since = "4.1.2")
+	public static GraphQueryResult parseGraphBackground(InputStream in, String baseURI, RDFParser parser,
+			WeakReference<?> callerReference) {
+		assert callerReference == null;
 		RDFFormat format = parser.getRDFFormat();
-		BackgroundGraphResult result = new BackgroundGraphResult(new QueueCursor<>(new LinkedBlockingQueue<>(1)),
+		BackgroundGraphResult result = new BackgroundGraphResult(
+				new QueueCursor<>(new LinkedBlockingQueue<>(1)),
 				parser, in, format.getCharset(), baseURI);
-		boolean allGood = false;
+
 		try {
 			ForkJoinPool.commonPool().submit(result);
-			allGood = true;
-		} finally {
-			if (!allGood) {
-				result.close();
-			}
+		} catch (Throwable t) {
+			result.close();
+			throw t;
 		}
-		return result;
+		return new CleanerGraphQueryResult(result, cleaner);
 	}
 
 	/**
@@ -259,15 +295,13 @@ public class QueryResults extends Iterations {
 	public static void report(TupleQueryResult tqr, QueryResultHandler handler)
 			throws TupleQueryResultHandlerException, QueryEvaluationException {
 
-		try {
+		try (tqr) {
 			handler.startQueryResult(tqr.getBindingNames());
 
 			while (tqr.hasNext()) {
 				BindingSet bindingSet = tqr.next();
 				handler.handleSolution(bindingSet);
 			}
-		} finally {
-			tqr.close();
 		}
 		handler.endQueryResult();
 	}
@@ -277,28 +311,26 @@ public class QueryResults extends Iterations {
 	 * The {@link GraphQueryResult#close()} method will always be called before this method returns.<br>
 	 * If there is an exception generated by the GraphQueryResult, {@link RDFHandler#endRDF()} will not be called.
 	 *
-	 * @param gqr        The query result to report.
-	 * @param rdfHandler The handler to report the query result to.
+	 * @param graphQueryResult The query result to report.
+	 * @param rdfHandler       The handler to report the query result to.
 	 * @throws RDFHandlerException      If such an exception is thrown by the used RDF writer.
 	 * @throws QueryEvaluationException
 	 */
-	public static void report(GraphQueryResult gqr, RDFHandler rdfHandler)
+	public static void report(GraphQueryResult graphQueryResult, RDFHandler rdfHandler)
 			throws RDFHandlerException, QueryEvaluationException {
-		try {
+		try (graphQueryResult) {
 			rdfHandler.startRDF();
 
-			for (Map.Entry<String, String> entry : gqr.getNamespaces().entrySet()) {
+			for (Map.Entry<String, String> entry : graphQueryResult.getNamespaces().entrySet()) {
 				String prefix = entry.getKey();
 				String namespace = entry.getValue();
 				rdfHandler.handleNamespace(prefix, namespace);
 			}
 
-			while (gqr.hasNext()) {
-				Statement st = gqr.next();
+			while (graphQueryResult.hasNext()) {
+				Statement st = graphQueryResult.next();
 				rdfHandler.handleStatement(st);
 			}
-		} finally {
-			gqr.close();
 		}
 		rdfHandler.endRDF();
 	}
@@ -369,7 +401,6 @@ public class QueryResults extends Iterations {
 	 */
 	private static boolean matchBindingSets(List<? extends BindingSet> queryResult1,
 			Iterable<? extends BindingSet> queryResult2, Map<BNode, BNode> bNodeMapping, int idx) {
-		boolean result = false;
 
 		if (idx < queryResult1.size()) {
 			BindingSet bs1 = queryResult1.get(idx);
@@ -390,19 +421,18 @@ public class QueryResults extends Iterations {
 				// triggering a stack overflow
 
 				// Enter recursion
-				result = matchBindingSets(queryResult1, queryResult2, newBNodeMapping, idx + 1);
-
-				if (result == true) {
+				if (matchBindingSets(queryResult1, queryResult2, newBNodeMapping, idx + 1)) {
 					// models match, look no further
-					break;
+					return true;
 				}
 			}
 		} else {
 			// All statements have been mapped successfully
-			result = true;
+			return true;
 		}
 
-		return result;
+		return false;
+
 	}
 
 	private static List<BindingSet> findMatchingBindingSets(BindingSet st, Iterable<? extends BindingSet> model,
@@ -456,7 +486,7 @@ public class QueryResults extends Iterations {
 					IRI dt1 = leftLit.getDatatype();
 					IRI dt2 = rightLit.getDatatype();
 
-					if (dt1 != null && dt2 != null && dt1.equals(dt2)
+					if (dt1 != null && dt1.equals(dt2)
 							&& XMLDatatypeUtil.isValidValue(leftLit.getLabel(), dt1)
 							&& XMLDatatypeUtil.isValidValue(rightLit.getLabel(), dt2)) {
 						Integer compareResult = null;
@@ -480,7 +510,7 @@ public class QueryResults extends Iterations {
 						}
 
 						if (compareResult != null) {
-							if (compareResult.intValue() != 0) {
+							if (compareResult != 0) {
 								return false;
 							}
 						} else if (!value1.equals(value2)) {
@@ -499,23 +529,36 @@ public class QueryResults extends Iterations {
 	}
 
 	/**
-	 * Check whether two {@link BindingSet}s are compatible.Two binding sets are compatible if they have equal values
-	 * for each binding name that occurs in both binding sets.
+	 * Check whether two {@link BindingSet}s are compatible. Two binding sets are compatible if they have equal values
+	 * for each variable that is bound in both binding sets.
 	 *
 	 * @param bs1
 	 * @param bs2
 	 * @return true if compatible
 	 */
 	public static boolean bindingSetsCompatible(BindingSet bs1, BindingSet bs2) {
-		Set<String> sharedBindings = new HashSet<>(bs1.getBindingNames());
-		sharedBindings.retainAll(bs2.getBindingNames());
+		Set<String> bs1BindingNames = bs1.getBindingNames();
+		if (bs1BindingNames.isEmpty()) {
+			return true;
+		}
 
-		for (String bindingName : sharedBindings) {
-			Value value1 = bs1.getValue(bindingName);
-			Value value2 = bs2.getValue(bindingName);
+		Set<String> bs2BindingNames = bs2.getBindingNames();
 
-			if (!value1.equals(value2)) {
-				return false;
+		for (String bindingName : bs1BindingNames) {
+
+			if (bs2BindingNames.contains(bindingName)) {
+				Value value1 = bs1.getValue(bindingName);
+
+				// if a variable is unbound in one set it is compatible
+				if (value1 != null) {
+					Value value2 = bs2.getValue(bindingName);
+
+					// if a variable is unbound in one set it is compatible
+					if (value2 != null && !value1.equals(value2)) {
+						return false;
+					}
+				}
+
 			}
 		}
 
@@ -655,6 +698,79 @@ public class QueryResults extends Iterations {
 		@Override
 		public List<String> getBindingNames() throws QueryEvaluationException {
 			return unfiltered.getBindingNames();
+		}
+
+	}
+
+	private static class CleanerGraphQueryResult implements GraphQueryResult {
+
+		private static final Logger logger = LoggerFactory.getLogger(CleanerGraphQueryResult.class);
+
+		private final GraphQueryResult delegate;
+		private final Cleaner.Cleanable cleanable;
+		private final CleanableState state;
+
+		public CleanerGraphQueryResult(GraphQueryResult delegate, Cleaner cleaner) {
+			this.delegate = delegate;
+			this.state = new CleanableState(delegate);
+			this.cleanable = cleaner.register(this, state);
+		}
+
+		@Override
+		public void close() {
+			state.close();
+			cleanable.clean();
+		}
+
+		@Override
+		public boolean hasNext() {
+			return delegate.hasNext();
+		}
+
+		@Override
+		public Statement next() {
+			return delegate.next();
+		}
+
+		@Override
+		public void remove() {
+			delegate.remove();
+		}
+
+		@Override
+		public Map<String, String> getNamespaces() throws QueryEvaluationException {
+			return delegate.getNamespaces();
+		}
+
+		private final static class CleanableState implements Runnable {
+
+			private final GraphQueryResult iteration;
+			private boolean closed = false;
+
+			public CleanableState(GraphQueryResult iteration) {
+				this.iteration = iteration;
+			}
+
+			@Override
+			public void run() {
+				if (!closed) {
+					try {
+						logger.warn(
+								"Forced closing of unclosed iteration. Set the system property 'org.eclipse.rdf4j.repository.debug' to 'true' to get stack traces.");
+						iteration.close();
+					} catch (Exception e) {
+						if (e instanceof InterruptedException) {
+							Thread.currentThread().interrupt();
+						}
+						throw new RuntimeException(e);
+					}
+				}
+			}
+
+			public void close() {
+				closed = true;
+				iteration.close();
+			}
 		}
 
 	}

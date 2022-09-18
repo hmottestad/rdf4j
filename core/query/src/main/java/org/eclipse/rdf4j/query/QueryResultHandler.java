@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.query;
 
@@ -56,8 +59,8 @@ public interface QueryResultHandler {
 
 	/**
 	 * Indicates the start of a sequence of Solutions. The supplied bindingNames are an indication of the values that
-	 * are in the Solutions. For example, a SeRQL query like <tt>select X, Y from {X} P {Y} </tt> will have binding
-	 * names <tt>X</tt> and <tt>Y</tt>.
+	 * are in the Solutions. For example, a SPARQL query like <var>select ?X ?Y where { ?X ?P ?Y } </var> will have
+	 * binding names <var>X</var> and <var>Y</var>.
 	 *
 	 * @param bindingNames An ordered set of binding names.
 	 * @throws TupleQueryResultHandlerException If there was an error during the starting of the query result handler.

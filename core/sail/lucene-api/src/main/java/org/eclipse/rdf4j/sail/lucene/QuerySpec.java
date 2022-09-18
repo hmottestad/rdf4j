@@ -1,9 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.lucene;
 
@@ -34,6 +37,8 @@ public class QuerySpec extends AbstractSearchQueryEvaluator {
 
 	private final StatementPattern typePattern;
 
+	private final StatementPattern idPattern;
+
 	private final Resource subject;
 
 	private final String queryString;
@@ -51,12 +56,20 @@ public class QuerySpec extends AbstractSearchQueryEvaluator {
 	public QuerySpec(StatementPattern matchesPattern, StatementPattern queryPattern, StatementPattern propertyPattern,
 			StatementPattern scorePattern, StatementPattern snippetPattern, StatementPattern typePattern,
 			Resource subject, String queryString, IRI propertyURI) {
+		this(matchesPattern, queryPattern, propertyPattern, scorePattern, snippetPattern, typePattern,
+				null, subject, queryString, propertyURI);
+	}
+
+	public QuerySpec(StatementPattern matchesPattern, StatementPattern queryPattern, StatementPattern propertyPattern,
+			StatementPattern scorePattern, StatementPattern snippetPattern, StatementPattern typePattern,
+			StatementPattern idPattern, Resource subject, String queryString, IRI propertyURI) {
 		this.matchesPattern = matchesPattern;
 		this.queryPattern = queryPattern;
 		this.propertyPattern = propertyPattern;
 		this.scorePattern = scorePattern;
 		this.snippetPattern = snippetPattern;
 		this.typePattern = typePattern;
+		this.idPattern = idPattern;
 		this.subject = subject;
 		this.queryString = queryString;
 		this.propertyURI = propertyURI;
@@ -94,6 +107,7 @@ public class QuerySpec extends AbstractSearchQueryEvaluator {
 		this.snippetPattern = null;
 		this.typePattern = null;
 		this.queryPattern = null;
+		this.idPattern = null;
 		this.subject = subject;
 		this.queryString = queryString;
 		this.propertyURI = propertyURI;
@@ -113,6 +127,7 @@ public class QuerySpec extends AbstractSearchQueryEvaluator {
 		replace(getPropertyPattern(), replacement);
 		replace(getSnippetPattern(), replacement);
 		replace(getTypePattern(), replacement);
+		replace(getIdPattern(), replacement);
 
 		final QueryModelNode placeholder = new SingletonSet();
 
@@ -152,6 +167,10 @@ public class QuerySpec extends AbstractSearchQueryEvaluator {
 
 	public StatementPattern getPropertyPattern() {
 		return propertyPattern;
+	}
+
+	public StatementPattern getIdPattern() {
+		return idPattern;
 	}
 
 	public String getPropertyVariableName() {

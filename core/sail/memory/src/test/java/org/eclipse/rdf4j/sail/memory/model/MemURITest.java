@@ -1,18 +1,20 @@
 /*******************************************************************************
  * Copyright (c) 2015 Eclipse RDF4J contributors, Aduna, and others.
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Distribution License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.memory.model;
-
-import static org.junit.Assert.assertEquals;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for class {@link MemIRI}.
@@ -37,7 +39,8 @@ public class MemURITest {
 		IRI uriImpl = SimpleValueFactory.getInstance().createIRI(uri);
 		MemIRI memURI = new MemIRI(this, uriImpl.getNamespace(), uriImpl.getLocalName());
 
-		assertEquals("MemURI not equal to URIImpl for: " + uri, uriImpl, memURI);
-		assertEquals("MemURI has different hash code than URIImpl for: " + uri, uriImpl.hashCode(), memURI.hashCode());
+		Assertions.assertEquals(uriImpl, memURI, "MemURI not equal to URIImpl for: " + uri);
+		Assertions.assertEquals(uriImpl.hashCode(), memURI.hashCode(),
+				"MemURI has different hash code than URIImpl for: " + uri);
 	}
 }
